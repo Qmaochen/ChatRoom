@@ -13,12 +13,12 @@ This is a simple chat room application built with Firebase for authentication, d
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Qmaochen/ChatRoom.git
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd lab06-simple-forum-main/ChatRoom
+   cd ChatRoom
    ```
 
 3. Initialize Firebase in your project:
@@ -38,7 +38,7 @@ This is a simple chat room application built with Firebase for authentication, d
 
 ## Repository URL
 
-[Repository URL](<repository-url>)
+[Repository URL](https://github.com/Qmaochen/ChatRoom)
 
 ## Screenshots
 
