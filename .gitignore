@@ -68,10 +68,6 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-# Dependencies
-node_modules/
-package-lock.json
-
 # Environment files
 .env.local
 .env.*.local
@@ -95,3 +91,12 @@ Thumbs.db
 .firebase/
 .firebaserc
 firebase-debug.log
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Firebase
+.firebase/
+firebase-debug.log*

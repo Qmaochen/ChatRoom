@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            min-height: 100px;
+        }
+        .instructions {
+            padding: 10px;
+            background-color: #fff8e1;
+            border-left: 4px solid #ffb300;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Firebase API Test</h1>
+    
+    <div class="instructions">
+        <h3>設置說明：</h3>
+        <ol>
+            <li>登入 <a href="https://console.firebase.google.com/" target="_blank">Firebase 控制台</a></li>
+            <li>創建一個新項目（或選擇現有項目）</li>
+            <li>點擊左側的「Authentication」並啟用「電子郵件/密碼」認證方式</li>
+            <li>回到項目概覽，點擊「項目設置」（齒輪圖標）</li>
+            <li>找到「Web 應用程序」部分，獲取您的 API Key</li>
+            <li>將 API Key 複製到下面的輸入框中</li>
+        </ol>
+    </div>
+    
+    <div class="form-group">
+        <label for="apiKey">Firebase API Key: (從 Firebase 控制台獲取)</label>
+        <input type="text" id="apiKey" value="YOUR_API_KEY" placeholder="輸入從 Firebase 控制台獲取的 API Key">
+    </div>
+    
+    <h2>Test Registration</h2>
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="test@example.com">
+    </div>
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Password (at least 6 characters)">
+    </div>
+    <button id="registerBtn">Test Register</button>
+    
+    <h2>Test Login</h2>
+    <div class="form-group">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" placeholder="test@example.com">
+    </div>
+    <div class="form-group">
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" placeholder="Password">
+    </div>
+    <button id="loginBtn">Test Login</button>
+    
+    <h2>Results:</h2>
+    <pre id="results"></pre>
+    
+    <script>
+        document.getElementById('registerBtn').addEventListener('click', testRegistration);
+        document.getElementById('loginBtn').addEventListener('click', testLogin);
+        
+        function testRegistration() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const resultsEl = document.getElementById('results');
+            
+            if (!apiKey || !email || !password) {
+                resultsEl.textContent = 'Please fill in all fields.';
+                return;
+            }
+            
+            resultsEl.textContent = 'Testing registration...';
+            
+            const requestBody = {
+                email: email,
+                password: password,
+                returnSecureToken: true
+            };
+            
+            fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(error => {
+                        throw error;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                resultsEl.textContent = 'Registration successful!\n\nResponse:\n' + JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                resultsEl.textContent = 'Registration failed!\n\nError:\n' + JSON.stringify(error, null, 2);
+            });
+        }
+        
+        function testLogin() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const resultsEl = document.getElementById('results');
+            
+            if (!apiKey || !email || !password) {
+                resultsEl.textContent = 'Please fill in all login fields.';
+                return;
+            }
+            
+            resultsEl.textContent = 'Testing login...';
+            
+            const requestBody = {
+                email: email,
+                password: password,
+                returnSecureToken: true
+            };
+            
+            fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(error => {
+                        throw error;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                resultsEl.textContent = 'Login successful!\n\nResponse:\n' + JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                resultsEl.textContent = 'Login failed!\n\nError:\n' + JSON.stringify(error, null, 2);
+            });
+        }
+    </script>
+</body>
+</html> 

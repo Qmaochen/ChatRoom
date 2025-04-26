@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Firebase Test</title>
+    <!-- Firebase v8 SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Firebase Test</h1>
+    <button id="initBtn">1. 初始化 Firebase</button>
+    <pre id="configOutput">配置尚未初始化</pre>
+    
+    <h2>測試認證</h2>
+    <div>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password (至少 6 位)">
+        <button id="registerBtn">註冊</button>
+        <button id="loginBtn">登入</button>
+    </div>
+    <pre id="authOutput">認證狀態：未登入</pre>
+    
+    <script>
+        // 直接在頁面中定義 Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAu9P2YxQN_kCgOpzDhD6Kz4XYoQxXMUyg",
+            authDomain: "chatroom-679cd.firebaseapp.com",
+            databaseURL: "https://chatroom-679cd-default-rtdb.firebaseio.com",
+            projectId: "chatroom-679cd",
+            storageBucket: "chatroom-679cd.firebasestorage.app",
+            messagingSenderId: "106697321863",
+            appId: "1:106697321863:web:58fece4bc10e1cc1507722"
+        };
+        
+        let initialized = false;
+        
+        document.getElementById('initBtn').addEventListener('click', function() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                initialized = true;
+                
+                const configOutput = document.getElementById('configOutput');
+                configOutput.textContent = '成功初始化 Firebase!\n' + 
+                    '使用的 API Key: ' + firebaseConfig.apiKey + '\n' +
+                    'Firebase SDK 版本: ' + firebase.SDK_VERSION;
+                
+                // 監聽認證狀態
+                firebase.auth().onAuthStateChanged(function(user) {
+                    const authOutput = document.getElementById('authOutput');
+                    if (user) {
+                        authOutput.textContent = '已登入: ' + user.email;
+                    } else {
+                        authOutput.textContent = '認證狀態：未登入';
+                    }
+                });
+            } catch (error) {
+                document.getElementById('configOutput').textContent = '初始化失敗: ' + error.message;
+            }
+        });
+        
+        document.getElementById('registerBtn').addEventListener('click', function() {
+            if (!initialized) {
+                alert('請先初始化 Firebase!');
+                return;
+            }
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('請輸入郵箱和密碼!');
+                return;
+            }
+            
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then(result => {
+                    document.getElementById('authOutput').textContent = '註冊成功!\n' + 
+                        '用戶 ID: ' + result.user.uid + '\n' +
+                        '郵箱: ' + result.user.email;
+                })
+                .catch(error => {
+                    document.getElementById('authOutput').textContent = '註冊失敗!\n' + 
+                        '錯誤代碼: ' + error.code + '\n' +
+                        '錯誤信息: ' + error.message;
+                });
+        });
+        
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            if (!initialized) {
+                alert('請先初始化 Firebase!');
+                return;
+            }
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('請輸入郵箱和密碼!');
+                return;
+            }
+            
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then(result => {
+                    document.getElementById('authOutput').textContent = '登入成功!\n' + 
+                        '用戶 ID: ' + result.user.uid + '\n' +
+                        '郵箱: ' + result.user.email;
+                })
+                .catch(error => {
+                    document.getElementById('authOutput').textContent = '登入失敗!\n' + 
+                        '錯誤代碼: ' + error.code + '\n' +
+                        '錯誤信息: ' + error.message;
+                });
+        });
+    </script>
+</body>
+</html> 

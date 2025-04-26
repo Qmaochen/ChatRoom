@@ -1,23 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>ChatRoom - Chat</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Initialize Firebase -->
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAu9P2YxQN_kCgOpzDhD6Kz4XYoQxXMUyg",
+            authDomain: "chatroom-679cd.firebaseapp.com",
+            databaseURL: "https://chatroom-679cd-default-rtdb.firebaseio.com",
+            projectId: "chatroom-679cd",
+            storageBucket: "chatroom-679cd.firebasestorage.app",
+            messagingSenderId: "106697321863",
+            appId: "1:106697321863:web:58fece4bc10e1cc1507722"
+        };
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        console.log("Firebase initialized in chat.html");
+    </script>
 </head>
 <body>
-    <h1>Chat Room</h1>
-    <div id="chat-rooms">
-        <!-- List of chat rooms -->
+    <div class="chat-container">
+        <!-- 聊天室標題和用戶資訊 -->
+        <div class="chat-header">
+            <div class="header-left">
+                <a href="chatrooms.html" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="room-info">
+                    <h2 id="room-name">Loading...</h2>
+                    <span id="room-members-count">0 members</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="user-email">Loading...</span>
+                </div>
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- 聊天內容區域 -->
+        <div class="chat-content">
+            <!-- 成員列表側邊欄 -->
+            <div class="members-sidebar">
+                <div class="members-header">
+                    <h3>Room Members</h3>
+                    <button id="toggle-members" class="toggle-members-btn">
+                        <i class="fas fa-users"></i>
+                    </button>
+                </div>
+                <div id="members-list" class="members-list">
+                    <!-- Members will be listed here -->
+                </div>
+            </div>
+
+            <!-- 訊息區域 -->
+            <div class="messages-container">
+                <div id="message-list" class="chat-messages">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <!-- 訊息輸入區域 -->
+                <div class="message-input-container">
+                    <form id="message-form" class="message-form">
+                        <div class="message-input-wrapper">
+                            <button type="button" id="emoji-button" class="emoji-button">
+                                <i class="far fa-smile"></i>
+                            </button>
+                            <input type="text" 
+                                   id="message-input" 
+                                   placeholder="Type your message..." 
+                                   required
+                                   autocomplete="off">
+                            <button type="submit" id="send-button" class="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="chat-window">
-        <!-- Chat messages will appear here -->
-    </div>
-    <form id="message-form">
-        <input type="text" placeholder="Type your message..." required>
-        <button type="submit">Send</button>
-    </form>
+    <!-- Chat Script -->
     <script src="js/chat.js"></script>
 </body>
 </html> 

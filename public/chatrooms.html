@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ChatRoom - Chatrooms</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <!-- Firebase Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Initialize Firebase -->
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAu9P2YxQN_kCgOpzDhD6Kz4XYoQxXMUyg",
+            authDomain: "chatroom-679cd.firebaseapp.com",
+            databaseURL: "https://chatroom-679cd-default-rtdb.firebaseio.com",
+            projectId: "chatroom-679cd",
+            storageBucket: "chatroom-679cd.firebasestorage.app",
+            messagingSenderId: "106697321863",
+            appId: "1:106697321863:web:58fece4bc10e1cc1507722"
+        };
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="chatrooms-container">
+        <div class="chatrooms-header">
+            <div class="user-info">
+                <i class="fas fa-user"></i>
+                <span id="user-email">Loading...</span>
+            </div>
+            <div class="header-buttons">
+                <button id="create-room-btn" class="create-room-btn">
+                    <i class="fas fa-plus"></i>
+                    New Chatroom
+                </button>
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <div class="chatrooms-list" id="chatrooms-list">
+            <!-- Chatrooms will be listed here -->
+        </div>
+
+        <!-- Create Chatroom Modal -->
+        <div id="create-room-modal" class="modal">
+            <div class="modal-content">
+                <h2>Create New Chatroom</h2>
+                <form id="create-room-form">
+                    <div class="input-field">
+                        <label for="room-name">Room Name</label>
+                        <input type="text" id="room-name" required>
+                    </div>
+                    <div class="input-field">
+                        <label for="room-description">Description (Optional)</label>
+                        <textarea id="room-description"></textarea>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" id="cancel-create-room" class="cancel-btn">Cancel</button>
+                        <button type="submit" class="submit-btn">Create Room</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="js/chatrooms.js"></script>
+</body>
+</html> 

@@ -1,5 +1,70 @@
 {
   "rules": {
+    "chatrooms": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "messages": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "members": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    "users": {
+      "$uid": {
+        // 只允許已認證的用戶讀取自己的資料
+        ".read": "auth != null && auth.uid == $uid",
+        // 只允許已認證的用戶更新自己的資料
+        ".write": "auth != null && auth.uid == $uid",
+        // 驗證資料格式
+        ".validate": "newData.hasChildren(['displayName', 'joinDate'])",
+        "displayName": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+        },
+        "bio": {
+          ".validate": "newData.isString() && newData.val().length <= 500"
+        },
+        "joinDate": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "lastUpdated": {
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+    "messages": {
+      // 只允許已認證的用戶讀寫消息
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$messageId": {
+        // 驗證消息格式
+        ".validate": "newData.hasChildren(['userId', 'userEmail', 'text', 'timestamp'])",
+        "userId": {
+          ".validate": "newData.val() == auth.uid"
+        },
+        "userEmail": {
+          ".validate": "newData.isString()"
+        },
+        "text": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 1000"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "com_list": {
+      // 只允許已認證的用戶讀寫
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    // 默認禁止其他路徑的讀寫
     ".read": false,
     ".write": false
   }

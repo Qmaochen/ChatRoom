@@ -5,12 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatRoom - Profile</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <!-- Firebase Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
-    <h1>User Profile</h1>
-    <div id="profile-info">
-        <!-- User profile information will be displayed here -->
+    <div class="background"></div>
+    
+    <div class="card-container">
+        <div class="logo">
+            <i class="fas fa-comments"></i>
+            <h1>ChatRoom</h1>
+        </div>
+        
+        <div class="header-content">
+            <h2 class="card-title">Your Profile</h2>
+            <p class="card-subtitle">Manage your account information</p>
+        </div>
+
+        <div id="profile-info" class="profile-container">
+            <!-- Profile information will be loaded here -->
+        </div>
+
+        <div class="navigation-links">
+            <a href="chat.html" class="nav-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Chat
+            </a>
+            <button onclick="signOut()" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sign Out
+            </button>
+        </div>
     </div>
-    <button id="edit-profile">Edit Profile</button>
+
+    <!-- Initialize Firebase and load profile script -->
+    <script src="js/profile.js"></script>
+
+    <style>
+        .profile-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .profile-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .profile-field label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-field input,
+        .profile-field textarea {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .profile-field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .update-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .update-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .navigation-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--error-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+    </style>
+
+    <script>
+        // 登出功能
+        function signOut() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Sign out error:', error);
+                alert('Error signing out');
+            });
+        }
+    </script>
 </body>
 </html> 
