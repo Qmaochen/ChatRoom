@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatRoom - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  </head>
+  <body>
+    <div class="background"></div>
+    
+    <div class="card-container">
+      <div class="logo">
+        <i class="fas fa-comments"></i>
+        <h1>ChatRoom</h1>
+      </div>
+      
+      <div class="header-content">
+        <h2 class="card-title">Welcome back</h2>
+        <p class="card-subtitle">Sign in to continue</p>
+      </div>
+      
+      <!-- Login Form -->
+      <form id="login-form" class="form">
+        <div class="input-field">
+          <label for="login-email" class="input-label">Email address</label>
+          <div class="input-wrapper">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="login-email" placeholder="Enter your email" required>
+          </div>
+        </div>
+        
+        <div class="input-field">
+          <label for="login-password" class="input-label">Password</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="login-password" placeholder="Enter your password" required>
+          </div>
+          <a href="#" class="forgot-password">Forgot password?</a>
+        </div>
+        
+        <button type="submit" class="submit-btn">Sign in</button>
+      </form>
+      
+      <div class="redirect-link">
+        <p>Don't have an account? <a href="register.html">Create an account</a></p>
+      </div>
+      
+      <div class="footer">
+        <p>Secure messaging for teams and friends</p>
+      </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+  </body>
+</html>
