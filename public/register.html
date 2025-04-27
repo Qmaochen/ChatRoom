@@ -41,12 +41,21 @@
         </div>
         
         <div class="header-content">
-            <h2 class="card-title">Create Account</h2>
-            <p class="card-subtitle">Join our community today</p>
+            <h2 class="card-title">Create an account</h2>
+            <p class="card-subtitle">Join our chat community</p>
         </div>
         
         <!-- Registration Form -->
         <form id="register-form" class="form">
+            <div class="input-field">
+                <label for="register-username" class="input-label">Username</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="register-username" placeholder="Enter your username" required minlength="3" maxlength="20" pattern="^[a-zA-Z0-9_-]+$" title="Username can only contain letters, numbers, underscores and hyphens">
+                </div>
+                <div class="input-hint">Username must be 3-20 characters long and can only contain letters, numbers, underscores and hyphens.</div>
+            </div>
+            
             <div class="input-field">
                 <label for="register-email" class="input-label">Email address</label>
                 <div class="input-wrapper">

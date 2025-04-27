@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>ChatRoom - Chat</title>
     <link rel="stylesheet" href="css/style.css">
@@ -33,26 +33,29 @@
     </script>
 </head>
 <body>
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
     <div class="chat-container">
         <!-- 聊天室標題和用戶資訊 -->
         <div class="chat-header">
             <div class="header-left">
-                <a href="chatrooms.html" class="back-button">
+                <a href="chatrooms.html" class="back-button" aria-label="Back to chatrooms">
                     <i class="fas fa-arrow-left"></i>
                 </a>
                 <div class="room-info">
                     <h2 id="room-name">Loading...</h2>
-                    <span id="room-members-count">0 members</span>
+                    <span id="room-members-count" aria-live="polite">0 members</span>
                 </div>
             </div>
             <div class="header-right">
                 <div class="user-info">
-                    <i class="fas fa-user"></i>
-                    <span id="user-email">Loading...</span>
+                    <i class="fas fa-user" aria-hidden="true"></i>
+                    <span id="user-email" aria-label="Current user email">Loading...</span>
                 </div>
-                <button id="logout-btn" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
+                <button id="logout-btn" class="logout-btn" aria-label="Logout">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    <span class="button-text">Logout</span>
                 </button>
             </div>
         </div>
@@ -60,21 +63,21 @@
         <!-- 聊天內容區域 -->
         <div class="chat-content">
             <!-- 成員列表側邊欄 -->
-            <div class="members-sidebar">
+            <div class="members-sidebar" aria-label="Members sidebar">
                 <div class="members-header">
                     <h3>Room Members</h3>
-                    <button id="toggle-members" class="toggle-members-btn">
-                        <i class="fas fa-users"></i>
+                    <button id="toggle-members" class="toggle-members-btn" aria-label="Toggle members list">
+                        <i class="fas fa-users" aria-hidden="true"></i>
                     </button>
                 </div>
-                <div id="members-list" class="members-list">
+                <div id="members-list" class="members-list" role="list" aria-label="Room members list">
                     <!-- Members will be listed here -->
                 </div>
             </div>
 
             <!-- 訊息區域 -->
             <div class="messages-container">
-                <div id="message-list" class="chat-messages">
+                <div id="message-list" class="chat-messages" role="log" aria-label="Chat messages">
                     <!-- Messages will appear here -->
                 </div>
                 
@@ -82,16 +85,17 @@
                 <div class="message-input-container">
                     <form id="message-form" class="message-form">
                         <div class="message-input-wrapper">
-                            <button type="button" id="emoji-button" class="emoji-button">
-                                <i class="far fa-smile"></i>
+                            <button type="button" id="emoji-button" class="emoji-button" aria-label="Open emoji picker">
+                                <i class="far fa-smile" aria-hidden="true"></i>
                             </button>
                             <input type="text" 
                                    id="message-input" 
                                    placeholder="Type your message..." 
                                    required
-                                   autocomplete="off">
-                            <button type="submit" id="send-button" class="send-button">
-                                <i class="fas fa-paper-plane"></i>
+                                   autocomplete="off"
+                                   aria-label="Message input">
+                            <button type="submit" id="send-button" class="send-button" aria-label="Send message">
+                                <i class="fas fa-paper-plane" aria-hidden="true"></i>
                             </button>
                         </div>
                     </form>

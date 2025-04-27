@@ -71,13 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const memberElement = document.createElement('div');
             memberElement.classList.add('member-item');
             
-            const initials = member.email.split('@')[0].substring(0, 2).toUpperCase();
+            const initials = member.username ? member.username.substring(0, 2).toUpperCase() : 
+                           member.email.split('@')[0].substring(0, 2).toUpperCase();
             
             memberElement.innerHTML = `
                 <div class="member-avatar">${initials}</div>
                 <div class="member-info">
-                    <div class="member-name">${member.email}</div>
-                    <div class="member-status">${member.role}</div>
+                    <div class="member-name">${member.username || member.email}</div>
+                    <div class="member-status">${member.role || 'member'}</div>
                 </div>
             `;
             
@@ -92,7 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const messagesRef = firebase.database().ref(`chatrooms/${roomId}/messages`);
+        const db = firebase.database();
+        const messagesRef = db.ref(`chatrooms/${roomId}/messages`);
+        
+        // 清空消息列表
+        messageList.innerHTML = '';
+        
+        // 監聽新消息
         messagesRef.on('child_added', (snapshot) => {
             try {
                 const message = snapshot.val();
@@ -114,21 +121,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
             
-            const isCurrentUser = message.email === currentUser.email;
+            const isCurrentUser = message.userId === currentUser.uid;
             messageElement.classList.add(isCurrentUser ? 'sent' : 'received');
 
-            messageElement.innerHTML = `
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-sender">${message.email}</span>
-                        <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                    <div class="message-text">${message.text}</div>
-                </div>
-            `;
+            // 獲取發送者的用戶名
+            firebase.database().ref(`users/${message.userId}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    const displayName = userData.username || message.email;
 
-            messageList.appendChild(messageElement);
-            messageList.scrollTop = messageList.scrollHeight;
+                    messageElement.innerHTML = `
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-sender">${displayName}</span>
+                                <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div class="message-text">${message.text}</div>
+                        </div>
+                    `;
+
+                    messageList.appendChild(messageElement);
+                    messageList.scrollTop = messageList.scrollHeight;
+                });
         } catch (error) {
             console.error('Error displaying message:', error);
         }
@@ -136,7 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 檢查用戶是否是聊天室成員
     function checkRoomMembership(user) {
-        const roomRef = firebase.database().ref(`chatrooms/${roomId}`);
+        const db = firebase.database();
+        const roomRef = db.ref(`chatrooms/${roomId}`);
+        
         roomRef.once('value').then((snapshot) => {
             const room = snapshot.val();
             if (!room) {
@@ -151,15 +167,21 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!room.members || !room.members[user.uid]) {
                 console.log('Adding user to room members');
-                // 如果用戶不是成員，將其添加為成員
-                roomRef.child(`members/${user.uid}`).set({
-                    email: user.email,
-                    role: 'member'
-                }).then(() => {
-                    loadMessages();
-                }).catch(error => {
-                    console.error('Error adding user to room:', error);
-                });
+                // 獲取用戶信息
+                return db.ref(`users/${user.uid}`).once('value')
+                    .then(snapshot => {
+                        const userData = snapshot.val();
+                        // 如果用戶不是成員，將其添加為成員
+                        return roomRef.child(`members/${user.uid}`).set({
+                            email: user.email,
+                            username: userData.username,
+                            role: 'member',
+                            joinedAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    })
+                    .then(() => {
+                        loadMessages();
+                    });
             } else {
                 console.log('User is already a member');
                 loadMessages();
@@ -181,8 +203,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             console.log('User is signed in:', user.email);
             currentUser = user;
+            
+            // 獲取用戶名並顯示
             if (userEmailElement) {
-                userEmailElement.textContent = user.email;
+                const db = firebase.database();
+                db.ref(`users/${user.uid}`).once('value')
+                    .then(snapshot => {
+                        const userData = snapshot.val();
+                        if (userData && userData.username) {
+                            userEmailElement.textContent = userData.username;
+                        } else {
+                            userEmailElement.textContent = user.email;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching username:', error);
+                        userEmailElement.textContent = user.email;
+                    });
             }
             
             checkRoomMembership(user);
@@ -201,19 +238,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const message = messageInput.value;
             if (message.trim() === '') return;
 
+            const currentUser = firebase.auth().currentUser;
             if (!currentUser) {
                 console.error('No user signed in');
                 return;
             }
 
-            const messagesRef = firebase.database().ref(`chatrooms/${roomId}/messages`);
+            const db = firebase.database();
+            const messagesRef = db.ref(`chatrooms/${roomId}/messages`);
+            
             messagesRef.push({
                 text: message,
                 email: currentUser.email,
                 userId: currentUser.uid,
-                timestamp: Date.now()
+                timestamp: firebase.database.ServerValue.TIMESTAMP
             }).catch(error => {
                 console.error('Error sending message:', error);
+                alert('Error sending message. Please try again.');
             });
 
             messageInput.value = '';
@@ -242,4 +283,42 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Emoji picker coming soon!');
         });
     }
+
+    // Sidebar toggle functionality
+    const toggleMembersButton = document.querySelector('.toggle-members');
+    const sidebarOverlay = document.querySelector('.sidebar-overlay');
+
+    function toggleSidebar() {
+        membersSidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        
+        // Update ARIA attributes
+        const isExpanded = membersSidebar.classList.contains('active');
+        toggleMembersButton.setAttribute('aria-expanded', isExpanded);
+        
+        // Prevent body scrolling when sidebar is open
+        document.body.style.overflow = isExpanded ? 'hidden' : '';
+    }
+
+    toggleMembersButton.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
+
+    // Close sidebar on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && membersSidebar.classList.contains('active')) {
+            toggleSidebar();
+        }
+    });
+
+    // Handle window resize
+    let windowWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+        const newWidth = window.innerWidth;
+        if (newWidth !== windowWidth) {
+            windowWidth = newWidth;
+            if (newWidth > 768 && membersSidebar.classList.contains('active')) {
+                toggleSidebar();
+            }
+        }
+    });
 }); 
