@@ -70,16 +70,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const memberElement = document.createElement('div');
             memberElement.classList.add('member-item');
             
-            const initials = member.username ? member.username.substring(0, 2).toUpperCase() : 
-                           member.email.split('@')[0].substring(0, 2).toUpperCase();
-            
-            memberElement.innerHTML = `
-                <div class="member-avatar">${initials}</div>
-                <div class="member-info">
-                    <div class="member-name">${member.username || member.email}</div>
-                    <div class="member-status">${member.role || 'member'}</div>
-                </div>
-            `;
+            // 獲取用戶資料以顯示頭像
+            firebase.database().ref(`users/${uid}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    const initials = member.username ? member.username.substring(0, 2).toUpperCase() : 
+                                   member.email.split('@')[0].substring(0, 2).toUpperCase();
+                    
+                    memberElement.innerHTML = `
+                        <div class="member-avatar">
+                            ${userData.photoURL ? 
+                                `<img src="${userData.photoURL}" alt="${member.username}'s avatar">` :
+                                initials}
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name">${member.username || member.email}</div>
+                            <div class="member-status">${member.role || 'member'}</div>
+                        </div>
+                    `;
+                });
             
             membersList.appendChild(memberElement);
         });
@@ -103,11 +112,57 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const message = snapshot.val();
                 displayMessage(message);
+                
+                // 處理新消息通知
+                handleNewMessageNotification(message);
             } catch (error) {
                 console.error('Error processing message:', error);
             }
         });
     }
+
+    // 增強的HTML轉義函數
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/\//g, "&#x2F;");
+    }
+
+    // URL淨化函數
+    function sanitizeUrl(url) {
+        if (!url) return '';
+        try {
+            const parsed = new URL(url);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:' 
+                ? url 
+                : '';
+        } catch {
+            return '';
+        }
+    }
+
+    // 消息驗證函數
+    function validateMessage(text) {
+        if (!text || typeof text !== 'string') return false;
+        
+        const trimmedText = text.trim();
+        if (trimmedText.length === 0) return false;
+        if (trimmedText.length > 1000) return false;
+        
+        // 檢查是否只包含空白字符
+        if (/^\s*$/.test(text)) return false;
+        
+        return true;
+    }
+
+    // ChatGPT 相關變量
+    let isAIChatRoom = false;
+    let conversationHistory = [];
 
     // 顯示訊息
     function displayMessage(message) {
@@ -125,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 messageElement.classList.add('system-message');
                 messageElement.innerHTML = `
                     <div class="message-content">
-                        <div class="message-text">${message.text}</div>
+                        <div class="message-text">${escapeHtml(message.text)}</div>
                         <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
                     </div>
                 `;
@@ -133,31 +188,123 @@ document.addEventListener('DOMContentLoaded', () => {
                 messageList.scrollTop = messageList.scrollHeight;
                 return;
             }
+
+            // 處理錯誤消息
+            if (message.type === 'error') {
+                messageElement.classList.add('error-message');
+                messageElement.innerHTML = `
+                    <div class="message-content">
+                        <div class="message-text">${escapeHtml(message.text)}</div>
+                    </div>
+                `;
+                messageList.appendChild(messageElement);
+                messageList.scrollTop = messageList.scrollHeight;
+                return;
+            }
             
-            const isCurrentUser = message.userId === currentUser.uid;
+            const isCurrentUser = message.userId === currentUser?.uid;
+            const isAI = message.userId === 'ai';
+            
             messageElement.classList.add(isCurrentUser ? 'sent' : 'received');
+            if (isAI) messageElement.classList.add('ai-message');
 
-            // 獲取發送者的用戶名
-            firebase.database().ref(`users/${message.userId}`).once('value')
-                .then(snapshot => {
-                    const userData = snapshot.val() || {};
-                    const displayName = userData.username || message.email;
+            // 獲取發送者的用戶名和頭像
+            if (isAI) {
+                displayAIMessage(messageElement, message);
+            } else {
+                firebase.database().ref(`users/${message.userId}`).once('value')
+                    .then(snapshot => {
+                        const userData = snapshot.val() || {};
+                        const displayName = userData.username || message.email;
+                        const initials = displayName.substring(0, 2).toUpperCase();
 
-                    messageElement.innerHTML = `
-                        <div class="message-content">
-                            <div class="message-header">
-                                <span class="message-sender">${displayName}</span>
-                                <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                        messageElement.innerHTML = `
+                            <div class="message-avatar">
+                                ${userData.photoURL ? 
+                                    `<img src="${userData.photoURL}" alt="${displayName}'s avatar">` :
+                                    initials}
                             </div>
-                            <div class="message-text">${message.text}</div>
-                        </div>
-                    `;
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <span class="message-sender">${escapeHtml(displayName)}</span>
+                                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                                </div>
+                                <div class="message-text">${escapeHtml(message.text)}</div>
+                            </div>
+                        `;
 
-                    messageList.appendChild(messageElement);
-                    messageList.scrollTop = messageList.scrollHeight;
-                });
+                        messageList.appendChild(messageElement);
+                        messageList.scrollTop = messageList.scrollHeight;
+                    });
+            }
         } catch (error) {
             console.error('Error displaying message:', error);
+        }
+    }
+
+    // 顯示 AI 消息
+    function displayAIMessage(messageElement, message) {
+        messageElement.innerHTML = `
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-header">
+                    <span class="message-sender">ChatGPT</span>
+                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div class="message-text">${escapeHtml(message.text)}</div>
+            </div>
+        `;
+
+        messageList.appendChild(messageElement);
+        messageList.scrollTop = messageList.scrollHeight;
+    }
+
+    // 處理新消息通知
+    async function handleNewMessageNotification(message) {
+        // 如果消息是系統消息或是當前用戶發送的，不發送通知
+        if (message.type === 'system' || message.userId === currentUser.uid) {
+            return;
+        }
+
+        // 如果瀏覽器窗口在焦點上或沒有通知權限，不發送通知
+        if (document.hasFocus() || Notification.permission !== "granted") {
+            return;
+        }
+
+        try {
+            // 獲取發送者的用戶信息
+            const userSnapshot = await firebase.database().ref(`users/${message.userId}`).once('value');
+            const userData = userSnapshot.val() || {};
+            const displayName = userData.username || message.email;
+
+            // 獲取聊天室信息
+            const roomSnapshot = await firebase.database().ref(`chatrooms/${roomId}`).once('value');
+            const roomData = roomSnapshot.val() || {};
+            const roomName = roomData.name || 'Chat Room';
+
+            // 創建通知
+            const notification = new Notification(`New message in ${roomName}`, {
+                body: `${displayName}: ${message.text}`,
+                icon: "/images/chat-icon.png",  // 使用默認圖標
+                tag: `chat-${roomId}`,  // 使用tag來防止重複通知
+                requireInteraction: false,  // 通知會自動關閉
+                silent: false  // 允許聲音
+            });
+
+            // 點擊通知時的行為
+            notification.onclick = function() {
+                // 聚焦到聊天窗口
+                window.focus();
+                this.close();
+            };
+
+            // 5秒後自動關閉通知
+            setTimeout(() => notification.close(), 5000);
+
+        } catch (error) {
+            console.error('Error sending notification:', error);
         }
     }
 
@@ -166,51 +313,55 @@ document.addEventListener('DOMContentLoaded', () => {
         const db = firebase.database();
         const roomRef = db.ref(`chatrooms/${roomId}`);
         
-        roomRef.once('value').then((snapshot) => {
+        return roomRef.once('value').then((snapshot) => {
             const room = snapshot.val();
             if (!room) {
                 console.error('Chatroom not found');
                 alert('Chatroom not found');
                 window.location.href = 'chatrooms.html';
-                return;
+                return false;
             }
 
             currentRoom = room;
+            
+            // 檢查用戶是否是成員
+            if (!room.members || !room.members[user.uid]) {
+                // 如果是私有聊天室，檢查加入請求
+                if (room.privacy === 'private') {
+                    return roomRef.child(`joinRequests/${user.uid}`).once('value').then(snapshot => {
+                        const request = snapshot.val();
+                        if (!request || request.status === 'rejected') {
+                            alert('You need to request access to join this private chatroom.');
+                            window.location.href = 'chatrooms.html';
+                            return false;
+                        } else if (request.status === 'pending') {
+                            alert('Your join request is still pending approval.');
+                            window.location.href = 'chatrooms.html';
+                            return false;
+                        }
+                    });
+                }
+                
+                // 如果是公開聊天室，自動加入
+                return roomRef.child(`members/${user.uid}`).set({
+                    email: user.email,
+                    username: user.displayName || user.email,
+                    role: 'member',
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => {
+                    updateRoomInfo(room);
+                    loadMessages();
+                    return true;
+                });
+            }
+            
+            // 已經是成員
             updateRoomInfo(room);
-            
-            // 如果是私有聊天室且用戶不是成員，檢查是否有待處理的加入請求
-            if (room.privacy === 'private' && (!room.members || !room.members[user.uid])) {
-                const joinRequestRef = db.ref(`chatrooms/${roomId}/joinRequests/${user.uid}`);
-                joinRequestRef.once('value').then(snapshot => {
-                    const request = snapshot.val();
-                    if (!request || request.status === 'rejected') {
-                        alert('You need to request access to join this private chatroom.');
-                        window.location.href = 'chatrooms.html';
-                    } else if (request.status === 'pending') {
-                        alert('Your join request is still pending approval.');
-                        window.location.href = 'chatrooms.html';
-                    }
-                });
-                return;
-            }
-            
-            // 如果是管理員，監聽加入請求
-            if (room.members && room.members[user.uid] && room.members[user.uid].role === 'admin') {
-                roomRef.child('joinRequests').on('value', snapshot => {
-                    const requests = snapshot.val();
-                    if (requests) {
-                        displayJoinRequests(requests);
-                    }
-                });
-            }
-            
-            // 更新成員列表
             if (room.members) {
                 updateMembersList(room.members);
             }
-            
-            // 載入訊息
             loadMessages();
+            return true;
         });
     }
 
@@ -380,16 +531,28 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('User is signed in:', user.email);
             currentUser = user;
             
-            // 獲取用戶名並顯示
+            // 獲取用戶名和頭像並顯示
             if (userEmailElement) {
                 const db = firebase.database();
                 db.ref(`users/${user.uid}`).once('value')
                     .then(snapshot => {
                         const userData = snapshot.val();
-                        if (userData && userData.username) {
-                            userEmailElement.textContent = userData.username;
-                        } else {
-                            userEmailElement.textContent = user.email;
+                        const userInfo = document.querySelector('.user-info');
+                        
+                        if (userInfo) {
+                            userInfo.innerHTML = `
+                                <a href="profile.html" class="profile-link" aria-label="View profile">
+                                    <div class="user-avatar">
+                                        ${userData.photoURL ? 
+                                            `<img src="${userData.photoURL}" alt="Your avatar">` :
+                                            (userData.username ? userData.username.substring(0, 2).toUpperCase() : 
+                                             user.email.substring(0, 2).toUpperCase())}
+                                    </div>
+                                    <span id="user-email" aria-label="Current user email">
+                                        ${userData.username || user.email}
+                                    </span>
+                                </a>
+                            `;
                         }
                     })
                     .catch(error => {
@@ -405,37 +568,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 發送訊息
-    if (messageForm) {
-        messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (!messageInput) return;
-            
-            const message = messageInput.value;
-            if (message.trim() === '') return;
+    // 更新消息發送處理
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value.trim();
+        
+        if (!message) return;
 
+        try {
             const currentUser = firebase.auth().currentUser;
             if (!currentUser) {
-                console.error('No user signed in');
-                return;
+                throw new Error('Please sign in to send messages');
             }
 
             const db = firebase.database();
             const messagesRef = db.ref(`chatrooms/${roomId}/messages`);
-            
-            messagesRef.push({
+
+            // 發送用戶消息
+            await messagesRef.push().set({
                 text: message,
-                email: currentUser.email,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
                 userId: currentUser.uid,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).catch(error => {
-                console.error('Error sending message:', error);
-                alert('Error sending message. Please try again.');
+                displayName: currentUser.displayName || currentUser.email,
+                type: 'user'
             });
 
             messageInput.value = '';
-        });
-    }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert(error.message || 'Failed to send message. Please try again.');
+        }
+    });
 
     // 登出
     if (logoutButton) {

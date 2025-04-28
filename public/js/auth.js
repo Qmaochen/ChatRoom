@@ -152,6 +152,20 @@ if (loginForm) {
                 console.log("Login successful:", userCredential);
                 const user = userCredential.user;
                 
+                // 請求通知權限
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(function(permission) {
+                        if (permission === "granted") {
+                            console.log("Notification permission granted");
+                            // 發送測試通知
+                            new Notification("Welcome to ChatRoom!", {
+                                body: "You have successfully logged in.",
+                                icon: "https://www.gstatic.com/notifications/icon_192.png"
+                            });
+                        }
+                    });
+                }
+                
                 // 獲取用戶信息
                 return db.ref('users').child(user.uid).once('value')
                     .then(snapshot => {

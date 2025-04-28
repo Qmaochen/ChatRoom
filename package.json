@@ -1,0 +1,24 @@
+{
+  "name": "chatroom",
+  "version": "1.0.0",
+  "description": "ChatRoom application with DialoGPT integration",
+  "main": "index.js",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@huggingface/inference": "^2.8.1",
+    "@mui/material": "^7.0.2",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "firebase": "^8.10.0",
+    "node-fetch": "^2.7.0",
+    "react-router-dom": "^7.5.2",
+    "styled-components": "^6.1.17"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

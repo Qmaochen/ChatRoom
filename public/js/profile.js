@@ -14,94 +14,232 @@ function ensureFirebaseInitialized() {
         };
         firebase.initializeApp(firebaseConfig);
     }
+    return firebase.auth();
 }
 
-// 檢查用戶認證狀態
-firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
-        console.log('User is signed in:', user.email);
-        loadUserProfile(user.uid);
-    } else {
-        console.log('No user is signed in');
-        window.location.href = 'index.html';
-    }
-});
-
-// 載入用戶資料
-function loadUserProfile(userId) {
-    const userRef = firebase.database().ref('users/' + userId);
-    userRef.once('value').then(function(snapshot) {
-        const userData = snapshot.val() || {};
-        displayProfile(userData);
-    }).catch(function(error) {
-        console.error('Error loading profile:', error);
-        alert('Error loading profile data');
-    });
-}
-
-// 顯示用戶資料
-function displayProfile(userData) {
-    const profileInfo = document.getElementById('profile-info');
-    if (!profileInfo) return;
-
-    profileInfo.innerHTML = `
-        <div class="profile-section">
-            <h2>Profile Information</h2>
-            <div class="profile-field">
-                <label>Display Name:</label>
-                <input type="text" id="displayName" value="${userData.displayName || ''}" placeholder="Enter your display name">
-            </div>
-            <div class="profile-field">
-                <label>Bio:</label>
-                <textarea id="bio" placeholder="Tell us about yourself">${userData.bio || ''}</textarea>
-            </div>
-            <div class="profile-field">
-                <label>Join Date:</label>
-                <span>${userData.joinDate || new Date().toISOString().split('T')[0]}</span>
-            </div>
-            <button onclick="updateProfile()" class="update-btn">Update Profile</button>
-        </div>
-    `;
-}
-
-// 更新用戶資料
-function updateProfile() {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-        alert('Please sign in to update your profile');
-        return;
-    }
-
-    const displayName = document.getElementById('displayName').value;
-    const bio = document.getElementById('bio').value;
-
-    const updates = {
-        displayName: displayName,
-        bio: bio,
-        lastUpdated: new Date().toISOString()
+// 驗證輸入
+function validateInput(input, type) {
+    const patterns = {
+        username: /^[a-zA-Z0-9_-]{3,20}$/,
+        phone: /^\+?[\d\s-]{10,}$/,
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     };
 
-    // 如果是新用戶，添加加入日期
-    firebase.database().ref('users/' + user.uid).once('value')
-        .then(snapshot => {
-            if (!snapshot.exists()) {
-                updates.joinDate = new Date().toISOString().split('T')[0];
-            }
-            
-            // 更新資料
-            return firebase.database().ref('users/' + user.uid).update(updates);
-        })
-        .then(() => {
-            alert('Profile updated successfully!');
-        })
-        .catch(error => {
-            console.error('Error updating profile:', error);
-            alert('Error updating profile');
-        });
+    if (!input.trim()) return true; // 允許空值
+    return patterns[type] ? patterns[type].test(input) : true;
 }
 
-document.getElementById('edit-profile').addEventListener('click', function() {
-    // Logic to edit user profile
-    console.log('Edit profile clicked');
-    // This is where you would add functionality to edit and save user profile information
+// 處理錯誤顯示
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    const errorDiv = element.parentElement.querySelector('.error-message') || 
+                    document.createElement('div');
+    
+    errorDiv.className = 'error-message';
+    errorDiv.style.color = '#f44336';
+    errorDiv.style.fontSize = '12px';
+    errorDiv.style.marginTop = '5px';
+    errorDiv.textContent = message;
+    
+    if (!element.parentElement.querySelector('.error-message')) {
+        element.parentElement.appendChild(errorDiv);
+    }
+}
+
+// 清除錯誤消息
+function clearError(elementId) {
+    const element = document.getElementById(elementId);
+    const errorDiv = element.parentElement.querySelector('.error-message');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const profileContainer = document.getElementById('profile-info');
+    const auth = ensureFirebaseInitialized();
+    
+    // 檢查用戶登入狀態
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            // 獲取用戶資料
+            const db = firebase.database();
+            const userRef = db.ref(`users/${user.uid}`);
+            
+            try {
+                const snapshot = await userRef.once('value');
+                const userData = snapshot.val() || {};
+                
+                // 顯示用戶資料表單
+                profileContainer.innerHTML = `
+                    <form id="profile-form" class="profile-section">
+                        <div class="profile-field">
+                            <label for="profile-picture">Profile Picture</label>
+                            <div class="profile-picture-container">
+                                <img id="profile-preview" src="${userData.photoURL || 'https://via.placeholder.com/150'}" 
+                                     alt="Profile picture" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;">
+                                <input type="file" id="profile-picture" accept="image/*" style="display: none;">
+                                <button type="button" onclick="document.getElementById('profile-picture').click()" class="update-btn">
+                                    Change Picture
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-field">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" value="${userData.username || ''}" required
+                                   placeholder="Enter your username (3-20 characters)">
+                        </div>
+                        
+                        <div class="profile-field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" value="${user.email}" disabled>
+                        </div>
+                        
+                        <div class="profile-field">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" value="${userData.phone || ''}"
+                                   placeholder="Enter your phone number">
+                        </div>
+                        
+                        <div class="profile-field">
+                            <label for="bio">Bio</label>
+                            <textarea id="bio" placeholder="Tell us about yourself">${userData.bio || ''}</textarea>
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="address">Address</label>
+                            <textarea id="address" placeholder="Enter your address">${userData.address || ''}</textarea>
+                        </div>
+                        
+                        <div class="profile-field">
+                            <label>Account Status</label>
+                            <div class="status-info">
+                                <p>Member since: ${new Date(userData.createdAt || Date.now()).toLocaleDateString()}</p>
+                                <p>Last login: ${new Date(userData.lastLogin || Date.now()).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="update-btn">Update Profile</button>
+                    </form>
+                `;
+                
+                // 處理圖片上傳預覽
+                const profilePicture = document.getElementById('profile-picture');
+                const profilePreview = document.getElementById('profile-preview');
+                
+                profilePicture.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                            alert('Image size should not exceed 5MB');
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            profilePreview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                
+                // 即時驗證
+                const usernameInput = document.getElementById('username');
+                const phoneInput = document.getElementById('phone');
+                
+                usernameInput.addEventListener('input', () => {
+                    clearError('username');
+                    if (!validateInput(usernameInput.value, 'username')) {
+                        showError('username', 'Username must be 3-20 characters and can only contain letters, numbers, underscores and hyphens');
+                    }
+                });
+                
+                phoneInput.addEventListener('input', () => {
+                    clearError('phone');
+                    if (!validateInput(phoneInput.value, 'phone')) {
+                        showError('phone', 'Please enter a valid phone number');
+                    }
+                });
+                
+                // 處理表單提交
+                const profileForm = document.getElementById('profile-form');
+                profileForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('username').value.trim();
+                    const phone = document.getElementById('phone').value.trim();
+                    const bio = document.getElementById('bio').value.trim();
+                    const address = document.getElementById('address').value.trim();
+                    
+                    // 驗證輸入
+                    if (!validateInput(username, 'username')) {
+                        showError('username', 'Invalid username format');
+                        return;
+                    }
+                    
+                    if (phone && !validateInput(phone, 'phone')) {
+                        showError('phone', 'Invalid phone number format');
+                        return;
+                    }
+                    
+                    try {
+                        const updatedData = {
+                            username,
+                            phone,
+                            bio,
+                            address,
+                            updatedAt: firebase.database.ServerValue.TIMESTAMP
+                        };
+                        
+                        // 更新用戶資料
+                        await userRef.update(updatedData);
+                        
+                        // 處理圖片上傳
+                        const file = profilePicture.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = async (e) => {
+                                await userRef.update({
+                                    photoURL: e.target.result
+                                });
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                        
+                        // 顯示成功消息
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'success-message';
+                        successMessage.style.backgroundColor = '#4CAF50';
+                        successMessage.style.color = 'white';
+                        successMessage.style.padding = '10px';
+                        successMessage.style.borderRadius = '5px';
+                        successMessage.style.marginTop = '10px';
+                        successMessage.textContent = 'Profile updated successfully!';
+                        
+                        profileForm.appendChild(successMessage);
+                        setTimeout(() => successMessage.remove(), 3000);
+                        
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        alert('Failed to update profile. Please try again.');
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                profileContainer.innerHTML = `
+                    <div class="error-container" style="text-align: center; padding: 20px;">
+                        <i class="fas fa-exclamation-circle" style="color: #f44336; font-size: 48px;"></i>
+                        <h2 style="color: #f44336; margin: 10px 0;">Error Loading Profile</h2>
+                        <p>We encountered an error while loading your profile. Please try again later.</p>
+                        <button onclick="location.reload()" class="update-btn" style="margin-top: 20px;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
 }); 
