@@ -3,12 +3,14 @@
     ".read": false,
     ".write": false,
     "chatrooms": {
-      ".read": "auth != null",
+      ".read": "auth !== null",
+      ".write": "auth !== null",
       "$roomId": {
-        ".write": "auth != null",
+        ".read": "auth !== null",
+        ".write": "auth !== null",
         "messages": {
-          ".read": "auth != null && root.child('chatrooms').child($roomId).child('members').child(auth.uid).exists()",
-          ".write": "auth != null && root.child('chatrooms').child($roomId).child('members').child(auth.uid).exists()",
+          ".read": "auth !== null && root.child('chatrooms').child($roomId).child('members').child(auth.uid).exists()",
+          ".write": "auth !== null && root.child('chatrooms').child($roomId).child('members').child(auth.uid).exists()",
           "$messageId": {
             ".validate": "newData.hasChildren(['text', 'userId', 'email', 'timestamp'])",
             "userId": {
@@ -20,9 +22,10 @@
           }
         },
         "members": {
-          ".read": "auth != null",
+          ".read": "auth !== null",
           "$userId": {
-            ".write": "auth != null && (auth.uid === $userId || root.child('chatrooms').child($roomId).child('createdBy').val() === auth.uid)"
+            ".read": "auth !== null",
+            ".write": "(auth !== null && root.child('chatrooms').child($roomId).child('privacy').val() === 'public') || (auth !== null && (root.child('chatrooms').child($roomId).child('members').child(auth.uid).child('role').val() === 'admin' || $userId === auth.uid))"
           }
         },
         "name": {
@@ -30,27 +33,29 @@
         },
         "description": {
           ".validate": "newData.isString() && newData.val().length <= 500"
+        },
+        "joinRequests": {
+          ".read": "auth !== null",
+          ".write": "auth !== null",
+          "$userId": {
+            ".read": "auth !== null && ($userId === auth.uid || root.child('chatrooms').child($roomId).child('members').child(auth.uid).child('role').val() === 'admin')",
+            ".write": "auth !== null && ($userId === auth.uid || root.child('chatrooms').child($roomId).child('members').child(auth.uid).child('role').val() === 'admin')"
+          }
         }
       }
     },
     "users": {
-      "$userId": {
-        ".read": "auth != null && auth.uid === $userId",
-        ".write": "auth != null && auth.uid === $userId",
-        "email": {
-          ".validate": "newData.val() === auth.email"
-        },
-        "lastOnline": {
-          ".validate": "newData.val() <= now"
-        }
+      "$uid": {
+        ".read": "auth !== null",
+        ".write": "$uid === auth.uid"
       }
     },
     "messages": {
-      // 只允許已認證的用戶讀寫消息
+
       ".read": "auth != null",
       ".write": "auth != null",
       "$messageId": {
-        // 驗證消息格式
+      
         ".validate": "newData.hasChildren(['userId', 'userEmail', 'text', 'timestamp'])",
         "userId": {
           ".validate": "newData.val() == auth.uid"
@@ -67,7 +72,6 @@
       }
     },
     "com_list": {
-      // 只允許已認證的用戶讀寫
       ".read": "auth != null",
       ".write": "auth != null"
     }

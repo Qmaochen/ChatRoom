@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>ChatRoom - Chatrooms</title>
+    <title>ChatRoom - Rooms</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -15,6 +15,76 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <!-- Firebase Database -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="background"></div>
+    
+    <div class="chatrooms-container">
+        <!-- 聊天室列表標題和操作按鈕 -->
+        <div class="chatrooms-header">
+            <div class="header-left">
+                <h1>Chatrooms</h1>
+                <span id="rooms-count">Loading...</span>
+            </div>
+            <div class="header-right">
+                <button id="create-room-btn" class="create-room-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>New Chatroom</span>
+                </button>
+                <div class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="user-email">Loading...</span>
+                </div>
+                <button id="profile-btn" class="profile-btn" onclick="window.location.href='profile.html'">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 聊天室列表 -->
+        <div id="chatrooms-list" class="chatrooms-list">
+            <!-- Chatrooms will be listed here -->
+        </div>
+    </div>
+
+    <!-- Create Chatroom Modal -->
+    <div id="create-room-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Chatroom</h2>
+                <button class="close-modal-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="create-room-form">
+                <div class="form-group">
+                    <label for="room-name">Room Name</label>
+                    <input type="text" id="room-name" required minlength="3" maxlength="30"
+                           placeholder="Enter room name (3-30 characters)">
+                </div>
+                <div class="form-group">
+                    <label for="room-description">Description</label>
+                    <textarea id="room-description" rows="3" maxlength="200"
+                              placeholder="Enter room description (optional)"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="room-private">
+                        <span class="checkbox-text">Private Room</span>
+                    </label>
+                    <p class="help-text">Private rooms require admin approval to join</p>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="cancel-btn" id="cancel-create-room">Cancel</button>
+                    <button type="submit" class="create-btn">Create Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Initialize Firebase -->
     <script>
         // Firebase 配置
@@ -30,52 +100,74 @@
         // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
     </script>
-</head>
-<body>
-    <div class="background"></div>
-    <div class="chatrooms-container">
-        <div class="chatrooms-header">
-            <div class="user-info">
-                <i class="fas fa-user"></i>
-                <span id="user-email">Loading...</span>
-            </div>
-            <div class="header-buttons">
-                <button id="create-room-btn" class="create-room-btn">
-                    <i class="fas fa-plus"></i>
-                    New Chatroom
-                </button>
-                <button id="logout-btn" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </button>
-            </div>
-        </div>
-
-        <div class="chatrooms-list" id="chatrooms-list">
-            <!-- Chatrooms will be listed here -->
-        </div>
-
-        <!-- Create Chatroom Modal -->
-        <div id="create-room-modal" class="modal">
-            <div class="modal-content">
-                <h2>Create New Chatroom</h2>
-                <form id="create-room-form">
-                    <div class="input-field">
-                        <label for="room-name">Room Name</label>
-                        <input type="text" id="room-name" required>
-                    </div>
-                    <div class="input-field">
-                        <label for="room-description">Description (Optional)</label>
-                        <textarea id="room-description"></textarea>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" id="cancel-create-room" class="cancel-btn">Cancel</button>
-                        <button type="submit" class="submit-btn">Create Room</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
     <script src="js/chatrooms.js"></script>
+    <style>
+    .privacy-options {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .privacy-option {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .privacy-option:hover {
+        border-color: var(--primary-color);
+        background: rgba(67, 97, 238, 0.05);
+    }
+
+    .privacy-option input[type="radio"] {
+        margin-right: 8px;
+    }
+
+    .privacy-description {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-left: 24px;
+    }
+
+    .no-chatrooms,
+    .error-message {
+        text-align: center;
+        padding: 40px 20px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        margin: 20px;
+    }
+
+    .no-chatrooms i,
+    .error-message i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .no-chatrooms i {
+        color: var(--primary-color);
+    }
+
+    .error-message i {
+        color: var(--error-color);
+    }
+
+    .no-chatrooms p,
+    .error-message p {
+        color: var(--text-secondary);
+        font-size: 16px;
+    }
+
+    .error-message p {
+        color: var(--error-color);
+    }
+    </style>
 </body>
 </html> 

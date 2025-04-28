@@ -75,21 +75,11 @@ if (registerForm) {
         submitBtn.textContent = "Creating account...";
         submitBtn.disabled = true;
 
-        let createdUser = null;
-        const db = firebase.database();
-
-        // 先檢查用戶名是否已存在
-        db.ref(`usernames/${username}`).once('value')
-            .then(snapshot => {
-                if (snapshot.exists()) {
-                    throw new Error('USERNAME_EXISTS');
-                }
-                // 創建用戶帳號
-                return firebase.auth().createUserWithEmailAndPassword(email, password);
-            })
+        // 直接創建用戶帳號
+        firebase.auth().createUserWithEmailAndPassword(email, password)
             .then(userCredential => {
                 console.log("Account created successfully:", userCredential);
-                createdUser = userCredential.user;
+                const user = userCredential.user;
                 
                 // 寫入用戶數據
                 const userData = {
@@ -99,12 +89,8 @@ if (registerForm) {
                     lastLogin: firebase.database.ServerValue.TIMESTAMP
                 };
 
-                // 使用 multi-path update 來確保原子性操作
-                const updates = {};
-                updates[`users/${createdUser.uid}`] = userData;
-                updates[`usernames/${username}`] = createdUser.uid;
-                
-                return db.ref().update(updates);
+                // 只更新用戶數據
+                return firebase.database().ref(`users/${user.uid}`).set(userData);
             })
             .then(() => {
                 console.log("User data saved successfully");
@@ -113,20 +99,8 @@ if (registerForm) {
             .catch(function(error) {
                 console.error("Registration failed:", error);
                 
-                // 如果發生錯誤，需要刪除已創建的用戶
-                if (createdUser) {
-                    createdUser.delete().then(() => {
-                        console.log("Rolled back user creation");
-                    }).catch((deleteError) => {
-                        console.error("Error rolling back:", deleteError);
-                    });
-                }
-                
                 let errorMessage;
-                switch(error.message) {
-                    case 'USERNAME_EXISTS':
-                        errorMessage = "This username is already taken. Please choose another one.";
-                        break;
+                switch(error.code) {
                     case 'auth/email-already-in-use':
                         errorMessage = "This email is already registered. Please use another email or sign in.";
                         break;
