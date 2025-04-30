@@ -31,7 +31,7 @@ function ensureFirebaseInitialized() {
             });
             
         console.log("Firebase initialized in auth.js");
-    }
+        }
     return firebase.auth();
 }
 
@@ -94,7 +94,7 @@ if (registerForm) {
             })
             .then(() => {
                 console.log("User data saved successfully");
-                window.location.href = "chatrooms.html";
+                window.location.replace("/chatrooms");
             })
             .catch(function(error) {
                 console.error("Registration failed:", error);
@@ -117,7 +117,7 @@ if (registerForm) {
                 alert(errorMessage);
                 submitBtn.textContent = "Create Account";
                 submitBtn.disabled = false;
-            });
+    });
     };
 }
 
@@ -181,11 +181,12 @@ if (loginForm) {
                         // 更新最後登入時間
                         return db.ref('users').child(user.uid).update({
                             lastLogin: firebase.database.ServerValue.TIMESTAMP
-                        });
-                    });
+        });
+});
             })
             .then(() => {
-                window.location.href = "chatrooms.html";
+                console.log("User data saved successfully");
+                window.location.replace("/chatrooms");
             })
             .catch(function(error) {
                 console.error("Login failed:", error);
@@ -206,17 +207,18 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
             
             // 如果在登入頁面但已登入，跳轉到聊天室列表頁面
             var path = window.location.pathname;
-            if (path.endsWith('index.html') || path.endsWith('/')) {
+            if (path.endsWith('index.html') || path === '/' || path === '') {
                 console.log("Redirecting to chatrooms page...");
-                window.location.href = "chatrooms.html";
+                window.location.replace("/chatrooms");
             }
         } else {
             console.log("No user signed in");
             
-            // 如果在聊天頁面但未登入，跳轉到登入頁面
-            if (window.location.pathname.endsWith('chat.html')) {
+            // 如果在需要登入的頁面但未登入，跳轉到登入頁面
+            var protectedPaths = ['/chat', '/chatrooms', '/profile'];
+            if (protectedPaths.some(page => window.location.pathname.startsWith(page))) {
                 console.log("Redirecting to login page...");
-                window.location.href = "index.html";
+                window.location.replace("/");
             }
         }
     });

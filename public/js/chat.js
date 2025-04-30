@@ -1,4 +1,24 @@
-// 等待 DOM 完全加載
+// Utility Functions
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function sanitizeUrl(url) {
+    if (!url) return '';
+    // Only allow http:, https:, and data: protocols
+    const protocol = url.split(':')[0].toLowerCase();
+    if (!['http', 'https', 'data'].includes(protocol)) {
+        return '';
+    }
+    return escapeHtml(url);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded');
     
@@ -11,8 +31,239 @@ document.addEventListener('DOMContentLoaded', () => {
     const roomNameElement = document.getElementById('room-name');
     const membersCountElement = document.getElementById('room-members-count');
     const membersList = document.getElementById('members-list');
-    const toggleMembersBtn = document.getElementById('toggle-members');
+    const toggleMembersButton = document.getElementById('toggle-members');
     const membersSidebar = document.querySelector('.members-sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    // 初始化 UI 元素
+    function initializeUI() {
+        // 側邊欄切換功能
+        if (toggleMembersButton && membersSidebar && sidebarOverlay) {
+            toggleMembersButton.addEventListener('click', () => {
+                membersSidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+
+            sidebarOverlay.addEventListener('click', () => {
+                membersSidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // 按ESC關閉側邊欄
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && membersSidebar.classList.contains('active')) {
+                    membersSidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+
+            // 響應式處理
+            let windowWidth = window.innerWidth;
+            window.addEventListener('resize', () => {
+                const newWidth = window.innerWidth;
+                if (newWidth !== windowWidth) {
+                    windowWidth = newWidth;
+                    if (newWidth > 768 && membersSidebar.classList.contains('active')) {
+                        membersSidebar.classList.remove('active');
+                        sidebarOverlay.classList.remove('active');
+                        document.body.classList.remove('sidebar-open');
+                    }
+                }
+            });
+        }
+
+        // 登出按鈕功能
+        if (logoutButton) {
+            logoutButton.addEventListener('click', () => {
+                firebase.auth().signOut()
+                    .then(() => {
+                        console.log('User signed out successfully');
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        console.error('Error signing out:', error);
+                        alert('Error signing out. Please try again.');
+                    });
+            });
+        }
+
+        // 消息表單提交功能
+        if (messageForm) {
+            messageForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const messageInput = document.getElementById('message-input');
+                const message = messageInput.value.trim();
+                
+                if (!message) return;
+
+                try {
+                    const currentUser = firebase.auth().currentUser;
+                    if (!currentUser) {
+                        throw new Error('Please sign in to send messages');
+                    }
+
+                    const db = firebase.database();
+                    const messagesRef = db.ref(`chatrooms/${roomId}/messages`);
+
+                    await messagesRef.push().set({
+                        text: message,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        userId: currentUser.uid,
+                        displayName: currentUser.displayName || currentUser.email,
+                        type: 'user'
+                    });
+
+                    messageInput.value = '';
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert(error.message || 'Failed to send message. Please try again.');
+                }
+            });
+        }
+
+        // 監聽加入請求
+        function listenToJoinRequests() {
+            const db = firebase.database();
+            const roomRef = db.ref(`chatrooms/${roomId}`);
+
+            // 監聽新的加入請求
+            roomRef.child('joinRequests').on('child_added', async (snapshot) => {
+                try {
+                    const request = snapshot.val();
+                    if (!request || request.status !== 'pending') return;
+
+                    // 在通知集合中添加請求通知
+                    const notificationRef = roomRef.child('notifications').push();
+                    await notificationRef.set({
+                        type: 'join_request',
+                        userId: request.userId,
+                        username: request.username || request.email,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        status: 'pending',
+                        requestId: snapshot.key
+                    });
+                } catch (error) {
+                    console.error('Error processing join request:', error);
+                }
+            });
+
+            // 監聽請求狀態變化
+            roomRef.child('joinRequests').on('child_changed', async (snapshot) => {
+                try {
+                    const request = snapshot.val();
+                    if (!request) return;
+
+                    // 更新通知狀態
+                    const notificationsRef = roomRef.child('notifications');
+                    const notificationsSnapshot = await notificationsRef.orderByChild('requestId').equalTo(snapshot.key).once('value');
+                    
+                    notificationsSnapshot.forEach(notification => {
+                        notification.ref.update({
+                            status: request.status
+                        });
+                    });
+
+                    if (request.status === 'approve') {
+                        // 將用戶添加到成員列表
+                        await roomRef.child(`members/${request.userId}`).set({
+                            email: request.email,
+                            username: request.username,
+                            role: 'member',
+                            joinedAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing join request status change:', error);
+                }
+            });
+
+            // 監聽通知
+            roomRef.child('notifications').on('child_added', async (snapshot) => {
+                try {
+                    const notification = snapshot.val();
+                    if (!notification) return;
+
+                    const currentUser = firebase.auth().currentUser;
+                    if (!currentUser) return;
+
+                    // 檢查用戶是否為管理員
+                    const memberSnapshot = await roomRef.child(`members/${currentUser.uid}`).once('value');
+                    const memberData = memberSnapshot.val();
+                    
+                    if (memberData?.role === 'admin') {
+                        displayNotification(notification, snapshot.key);
+                    }
+                } catch (error) {
+                    console.error('Error displaying notification:', error);
+                }
+            });
+        }
+
+        // 處理加入請求
+        window.handleJoinRequest = async function(requestId, action) {
+            try {
+                const currentUser = firebase.auth().currentUser;
+                if (!currentUser) {
+                    throw new Error('You must be logged in to handle join requests');
+                }
+
+                const db = firebase.database();
+                const roomRef = db.ref(`chatrooms/${roomId}`);
+                
+                // 檢查當前用戶是否為管理員
+                const memberSnapshot = await roomRef.child(`members/${currentUser.uid}`).once('value');
+                const memberData = memberSnapshot.val();
+                
+                if (!memberData || memberData.role !== 'admin') {
+                    throw new Error('Only admins can handle join requests');
+                }
+
+                // 更新請求狀態
+                await roomRef.child(`joinRequests/${requestId}`).update({
+                    status: action,
+                    handledBy: currentUser.uid,
+                    handledAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                console.log(`Join request ${requestId} ${action}d successfully`);
+            } catch (error) {
+                console.error('Error handling join request:', error);
+                alert(error.message);
+            }
+        };
+    }
+
+    // 顯示通知
+    function displayNotification(notification, notificationId) {
+        if (!messageList) return;
+
+        const notificationElement = document.createElement('div');
+        notificationElement.className = 'message system-message notification';
+        notificationElement.id = `notification-${notificationId}`;
+
+        if (notification.type === 'join_request' && notification.status === 'pending') {
+            notificationElement.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${escapeHtml(notification.username)} 請求加入聊天室</div>
+                    <div class="request-actions">
+                        <button onclick="handleJoinRequest('${notification.requestId}', 'approve')" class="approve-btn">
+                            <i class="fas fa-check"></i> 同意
+                        </button>
+                        <button onclick="handleJoinRequest('${notification.requestId}', 'reject')" class="reject-btn">
+                            <i class="fas fa-times"></i> 拒絕
+                        </button>
+                    </div>
+                    <div class="message-time">${formatTimestamp(notification.timestamp)}</div>
+                </div>
+            `;
+        }
+
+        messageList.appendChild(notificationElement);
+        messageList.scrollTop = messageList.scrollHeight;
+    }
 
     // 檢查所有必需的 DOM 元素是否存在
     if (!messageList) {
@@ -33,22 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRoom = null;
     let currentUser = null;
 
-    // 切換成員列表側邊欄
-    if (toggleMembersBtn && membersSidebar) {
-        toggleMembersBtn.addEventListener('click', () => {
-            membersSidebar.classList.toggle('active');
-        });
-
-        // 點擊側邊欄外部時關閉側邊欄
-        document.addEventListener('click', (e) => {
-            if (membersSidebar.classList.contains('active') &&
-                !membersSidebar.contains(e.target) &&
-                e.target !== toggleMembersBtn) {
-                membersSidebar.classList.remove('active');
-            }
-        });
-    }
-
     // 更新房間信息
     function updateRoomInfo(room) {
         if (roomNameElement) {
@@ -65,12 +300,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateMembersList(members) {
         if (!membersList) return;
         
-        membersList.innerHTML = '';
+        membersList.innerHTML = `
+            <div class="members-header">
+                <h3>Room Members</h3>
+                <span class="members-count">${Object.keys(members).length}</span>
+            </div>
+            <div class="members-list-content"></div>
+        `;
+
+        const membersListContent = membersList.querySelector('.members-list-content');
+        
         Object.entries(members).forEach(([uid, member]) => {
             const memberElement = document.createElement('div');
             memberElement.classList.add('member-item');
             
-            // 獲取用戶資料以顯示頭像
             firebase.database().ref(`users/${uid}`).once('value')
                 .then(snapshot => {
                     const userData = snapshot.val() || {};
@@ -85,13 +328,182 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="member-info">
                             <div class="member-name">${member.username || member.email}</div>
-                            <div class="member-status">${member.role || 'member'}</div>
+                            <div class="member-role ${member.role === 'admin' ? 'admin-role' : ''}">${member.role || 'member'}</div>
                         </div>
                     `;
                 });
             
-            membersList.appendChild(memberElement);
+            membersListContent.appendChild(memberElement);
         });
+    }
+
+    // 顯示加入請求
+    function displayJoinRequests() {
+        const db = firebase.database();
+        const requestsSection = document.getElementById('join-requests-section');
+        const roomRef = db.ref(`chatrooms/${roomId}`);
+
+        roomRef.child('joinRequests').on('value', snapshot => {
+            const requests = snapshot.val() || {};
+            const pendingRequests = Object.entries(requests).filter(([_, req]) => req.status === 'pending');
+
+            if (pendingRequests.length > 0) {
+                requestsSection.innerHTML = `
+                    <div class="requests-header">
+                        <h3>Pending Requests</h3>
+                        <span class="requests-count">${pendingRequests.length}</span>
+                    </div>
+                    <div class="requests-list"></div>
+                `;
+
+                const requestsList = requestsSection.querySelector('.requests-list');
+                
+                pendingRequests.forEach(([userId, request]) => {
+                    const requestElement = document.createElement('div');
+                    requestElement.className = 'request-item';
+                    requestElement.innerHTML = `
+                        <div class="request-info">
+                            <div class="request-user">${escapeHtml(request.username || request.email)}</div>
+                            <div class="request-time">${formatTimestamp(request.requestedAt)}</div>
+                        </div>
+                        <div class="request-actions">
+                            <button class="approve-btn" title="Approve">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="reject-btn" title="Reject">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    // 添加按鈕事件
+                    const approveBtn = requestElement.querySelector('.approve-btn');
+                    const rejectBtn = requestElement.querySelector('.reject-btn');
+
+                    approveBtn.addEventListener('click', () => handleJoinRequest(userId, 'approve'));
+                    rejectBtn.addEventListener('click', () => handleJoinRequest(userId, 'reject'));
+
+                    requestsList.appendChild(requestElement);
+                });
+            } else {
+                requestsSection.innerHTML = '';
+            }
+        });
+    }
+
+    // 處理加入請求
+    async function handleJoinRequest(userId, action) {
+        try {
+            const db = firebase.database();
+            const roomRef = db.ref(`chatrooms/${roomId}`);
+            
+            // 獲取請求資料
+            const requestSnapshot = await roomRef.child(`joinRequests/${userId}`).once('value');
+            const request = requestSnapshot.val();
+
+            if (action === 'approve') {
+                // 添加用戶到成員列表
+                await roomRef.child(`members/${userId}`).set({
+                    email: request.email,
+                    username: request.username,
+                    role: 'member',
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                // 更新請求狀態
+                await roomRef.child(`joinRequests/${userId}`).update({
+                    status: 'approved',
+                    handledAt: firebase.database.ServerValue.TIMESTAMP,
+                    handledBy: firebase.auth().currentUser.uid
+                });
+
+                // 更新UI
+                const memberElement = document.createElement('div');
+                memberElement.classList.add('member-item');
+                memberElement.innerHTML = `
+                    <div class="member-avatar">
+                        ${request.username.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">${request.username}</div>
+                        <div class="member-role">member</div>
+                    </div>
+                `;
+                
+                const membersListContent = membersList.querySelector('.members-list-content');
+                if (membersListContent) {
+                    membersListContent.appendChild(memberElement);
+                }
+
+                // 顯示通知
+                showNotification(`${request.username} has joined the chat room`, 'success');
+            } else {
+                // 更新請求狀態為拒絕
+                await roomRef.child(`joinRequests/${userId}`).update({
+                    status: 'rejected',
+                    handledAt: firebase.database.ServerValue.TIMESTAMP,
+                    handledBy: firebase.auth().currentUser.uid
+                });
+
+                // 顯示通知
+                showNotification(`Request from ${request.username} has been rejected`, 'info');
+            }
+
+            // 移除請求項目
+            const requestElement = document.querySelector(`.request-item[data-user-id="${userId}"]`);
+            if (requestElement) {
+                requestElement.remove();
+            }
+
+            // 更新請求計數
+            updateRequestsCount();
+
+        } catch (error) {
+            console.error('Error handling join request:', error);
+            showNotification('Error processing request. Please try again.', 'error');
+        }
+    }
+
+    // 顯示通知
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // 動畫效果
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+
+        // 自動移除
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // 更新請求計數
+    function updateRequestsCount() {
+        const requestsCount = document.querySelector('.requests-count');
+        const requestsList = document.querySelector('.requests-list');
+        
+        if (requestsCount && requestsList) {
+            const count = requestsList.children.length;
+            requestsCount.textContent = count;
+
+            // 如果沒有請求了，隱藏整個請求區域
+            const requestsSection = document.getElementById('join-requests-section');
+            if (requestsSection && count === 0) {
+                requestsSection.innerHTML = '';
+            }
+        }
     }
 
     // 載入訊息
@@ -104,158 +516,69 @@ document.addEventListener('DOMContentLoaded', () => {
         const db = firebase.database();
         const messagesRef = db.ref(`chatrooms/${roomId}/messages`);
         
-        // 清空消息列表
         messageList.innerHTML = '';
         
-        // 監聽新消息
-        messagesRef.on('child_added', (snapshot) => {
+        messagesRef.on('child_added', async (snapshot) => {
             try {
                 const message = snapshot.val();
-                displayMessage(message);
-                
-                // 處理新消息通知
-                handleNewMessageNotification(message);
+                displayMessage(message, snapshot.key);
             } catch (error) {
                 console.error('Error processing message:', error);
             }
         });
     }
 
-    // 增強的HTML轉義函數
-    function escapeHtml(unsafe) {
-        if (typeof unsafe !== 'string') return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;")
-            .replace(/\//g, "&#x2F;");
-    }
-
-    // URL淨化函數
-    function sanitizeUrl(url) {
-        if (!url) return '';
-        try {
-            const parsed = new URL(url);
-            return parsed.protocol === 'http:' || parsed.protocol === 'https:' 
-                ? url 
-                : '';
-        } catch {
-            return '';
-        }
-    }
-
-    // 消息驗證函數
-    function validateMessage(text) {
-        if (!text || typeof text !== 'string') return false;
-        
-        const trimmedText = text.trim();
-        if (trimmedText.length === 0) return false;
-        if (trimmedText.length > 1000) return false;
-        
-        // 檢查是否只包含空白字符
-        if (/^\s*$/.test(text)) return false;
-        
-        return true;
-    }
-
-    // ChatGPT 相關變量
-    let isAIChatRoom = false;
-    let conversationHistory = [];
-
     // 顯示訊息
-    function displayMessage(message) {
+    function displayMessage(message, messageId) {
         if (!messageList) {
             console.error('Message list element not found in displayMessage');
             return;
         }
 
-        try {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            
-            // 處理系統消息
-            if (message.type === 'system') {
-                messageElement.classList.add('system-message');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message';
+        messageElement.id = messageId;
+
+        if (message.type === 'system') {
+            if (message.requestId) {
+                // 這是一個加入請求消息
+                messageElement.className = 'message system-message join-request';
                 messageElement.innerHTML = `
                     <div class="message-content">
                         <div class="message-text">${escapeHtml(message.text)}</div>
-                        <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
+                        <div class="request-actions">
+                            <button onclick="handleJoinRequest('${message.requestId}', 'approve')" class="approve-btn">
+                                <i class="fas fa-check"></i> 同意
+                            </button>
+                            <button onclick="handleJoinRequest('${message.requestId}', 'reject')" class="reject-btn">
+                                <i class="fas fa-times"></i> 拒絕
+                            </button>
+                        </div>
+                        <div class="message-time">${formatTimestamp(message.timestamp)}</div>
                     </div>
                 `;
-                messageList.appendChild(messageElement);
-                messageList.scrollTop = messageList.scrollHeight;
-                return;
-            }
-
-            // 處理錯誤消息
-            if (message.type === 'error') {
-                messageElement.classList.add('error-message');
-                messageElement.innerHTML = `
-                    <div class="message-content">
-                        <div class="message-text">${escapeHtml(message.text)}</div>
-                    </div>
-                `;
-                messageList.appendChild(messageElement);
-                messageList.scrollTop = messageList.scrollHeight;
-                return;
-            }
-            
-            const isCurrentUser = message.userId === currentUser?.uid;
-            const isAI = message.userId === 'ai';
-            
-            messageElement.classList.add(isCurrentUser ? 'sent' : 'received');
-            if (isAI) messageElement.classList.add('ai-message');
-
-            // 獲取發送者的用戶名和頭像
-            if (isAI) {
-                displayAIMessage(messageElement, message);
             } else {
-                firebase.database().ref(`users/${message.userId}`).once('value')
-                    .then(snapshot => {
-                        const userData = snapshot.val() || {};
-                        const displayName = userData.username || message.email;
-                        const initials = displayName.substring(0, 2).toUpperCase();
-
-                        messageElement.innerHTML = `
-                            <div class="message-avatar">
-                                ${userData.photoURL ? 
-                                    `<img src="${userData.photoURL}" alt="${displayName}'s avatar">` :
-                                    initials}
-                            </div>
-                            <div class="message-content">
-                                <div class="message-header">
-                                    <span class="message-sender">${escapeHtml(displayName)}</span>
-                                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
-                                </div>
-                                <div class="message-text">${escapeHtml(message.text)}</div>
-                            </div>
-                        `;
-
-                        messageList.appendChild(messageElement);
-                        messageList.scrollTop = messageList.scrollHeight;
-                    });
+                // 一般系統消息
+                messageElement.className = 'message system-message';
+                messageElement.innerHTML = `
+                    <div class="message-content">
+                        <div class="message-text">${escapeHtml(message.text)}</div>
+                        <div class="message-time">${formatTimestamp(message.timestamp)}</div>
+                    </div>
+                `;
             }
-        } catch (error) {
-            console.error('Error displaying message:', error);
-        }
-    }
-
-    // 顯示 AI 消息
-    function displayAIMessage(messageElement, message) {
-        messageElement.innerHTML = `
-            <div class="message-avatar">
-                <i class="fas fa-robot"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-header">
-                    <span class="message-sender">ChatGPT</span>
-                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+        } else {
+            const isCurrentUser = message.userId === firebase.auth().currentUser?.uid;
+            messageElement.className = `message ${isCurrentUser ? 'sent' : 'received'}`;
+            
+            messageElement.innerHTML = `
+                <div class="message-content">
+                    ${!isCurrentUser ? `<div class="message-sender">${escapeHtml(message.displayName || 'Anonymous')}</div>` : ''}
+                    <div class="message-text">${escapeHtml(message.text)}</div>
+                    <div class="message-time">${formatTimestamp(message.timestamp)}</div>
                 </div>
-                <div class="message-text">${escapeHtml(message.text)}</div>
-            </div>
-        `;
+            `;
+        }
 
         messageList.appendChild(messageElement);
         messageList.scrollTop = messageList.scrollHeight;
@@ -324,14 +647,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentRoom = room;
             
-            // 檢查用戶是否是成員
             if (!room.members || !room.members[user.uid]) {
-                // 如果是私有聊天室，檢查加入請求
                 if (room.privacy === 'private') {
                     return roomRef.child(`joinRequests/${user.uid}`).once('value').then(snapshot => {
                         const request = snapshot.val();
-                        if (!request || request.status === 'rejected') {
-                            alert('You need to request access to join this private chatroom.');
+                        if (!request) {
+                            return roomRef.child(`joinRequests/${user.uid}`).set({
+                                userId: user.uid,
+                                email: user.email,
+                                username: user.displayName || user.email,
+                                status: 'pending',
+                                requestedAt: firebase.database.ServerValue.TIMESTAMP
+                            }).then(() => {
+                                alert('Your join request has been sent. Please wait for approval.');
+                                window.location.href = 'chatrooms.html';
+                                return false;
+                            });
+                        } else if (request.status === 'rejected') {
+                            alert('Your join request has been rejected.');
                             window.location.href = 'chatrooms.html';
                             return false;
                         } else if (request.status === 'pending') {
@@ -342,7 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 
-                // 如果是公開聊天室，自動加入
                 return roomRef.child(`members/${user.uid}`).set({
                     email: user.email,
                     username: user.displayName || user.email,
@@ -355,7 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             
-            // 已經是成員
             updateRoomInfo(room);
             if (room.members) {
                 updateMembersList(room.members);
@@ -363,147 +694,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loadMessages();
             return true;
         });
-    }
-
-    // 處理加入請求
-    function handleJoinRequest(userId, action) {
-        const db = firebase.database();
-        const roomRef = db.ref(`chatrooms/${roomId}`);
-        const requestRef = db.ref(`chatrooms/${roomId}/joinRequests/${userId}`);
-        const currentUser = firebase.auth().currentUser;
-
-        if (!currentUser) {
-            console.error('No user signed in');
-            return;
-        }
-
-        // 檢查當前用戶是否有權限處理請求
-        roomRef.child(`members/${currentUser.uid}`).once('value')
-            .then(snapshot => {
-                const memberData = snapshot.val();
-                if (!memberData || memberData.role !== 'admin') {
-                    throw new Error('You do not have permission to handle join requests');
-                }
-
-                if (action === 'approve') {
-                    // 先獲取請求數據
-                    return requestRef.once('value')
-                        .then(snapshot => {
-                            const request = snapshot.val();
-                            if (!request) {
-                                throw new Error('Join request not found');
-                            }
-
-                            const updates = {};
-                            // 更新請求狀態
-                            updates[`joinRequests/${userId}/status`] = 'approved';
-                            updates[`joinRequests/${userId}/approvedBy`] = currentUser.uid;
-                            updates[`joinRequests/${userId}/approvedAt`] = firebase.database.ServerValue.TIMESTAMP;
-
-                            // 添加到成員列表
-                            updates[`members/${userId}`] = {
-                                email: request.email,
-                                username: request.username,
-                                role: 'member',
-                                joinedAt: firebase.database.ServerValue.TIMESTAMP
-                            };
-
-                            // 執行更新
-                            return roomRef.update(updates)
-                                .then(() => {
-                                    // 發送系統消息
-                                    return roomRef.child('messages').push({
-                                        type: 'system',
-                                        text: `${request.username} has joined the chatroom`,
-                                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                                        userId: currentUser.uid,
-                                        email: currentUser.email
-                                    });
-                                });
-                        });
-                } else if (action === 'reject') {
-                    // 拒絕請求
-                    return requestRef.update({
-                        status: 'rejected',
-                        rejectedBy: currentUser.uid,
-                        rejectedAt: firebase.database.ServerValue.TIMESTAMP
-                    });
-                }
-            })
-            .then(() => {
-                console.log(`Join request ${action}ed successfully`);
-                // 移除請求顯示
-                const requestItem = document.querySelector(`.request-item[data-user-id="${userId}"]`);
-                if (requestItem) {
-                    requestItem.remove();
-                }
-            })
-            .catch(error => {
-                console.error('Error handling join request:', error);
-                alert(error.message || `Error ${action}ing join request`);
-            });
-    }
-
-    // 顯示加入請求
-    function displayJoinRequests(requests) {
-        if (!messageList) return;
-
-        // 移除現有的請求顯示
-        const existingRequests = messageList.querySelector('.join-requests');
-        if (existingRequests) {
-            existingRequests.remove();
-        }
-
-        // 過濾出待處理的請求
-        const pendingRequests = Object.entries(requests || {})
-            .filter(([_, request]) => request.status === 'pending');
-
-        if (pendingRequests.length === 0) return;
-
-        // 創建請求容器
-        const requestsContainer = document.createElement('div');
-        requestsContainer.className = 'join-requests';
-        requestsContainer.innerHTML = `
-            <div class="join-requests-header">
-                <h3>Pending Join Requests (${pendingRequests.length})</h3>
-            </div>
-            <div class="requests-list"></div>
-        `;
-
-        const requestsList = requestsContainer.querySelector('.requests-list');
-
-        // 添加每個請求
-        pendingRequests.forEach(([userId, request]) => {
-            const requestElement = document.createElement('div');
-            requestElement.className = 'request-item';
-            requestElement.dataset.userId = userId;
-            requestElement.innerHTML = `
-                <div class="request-info">
-                    <span class="request-username">${request.username}</span>
-                    <span class="request-time">Requested ${formatTimestamp(request.requestedAt)}</span>
-                </div>
-                <div class="request-actions">
-                    <button class="approve-btn">
-                        <i class="fas fa-check"></i> Approve
-                    </button>
-                    <button class="reject-btn">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                </div>
-            `;
-
-            // 添加按鈕事件監聽器
-            const approveBtn = requestElement.querySelector('.approve-btn');
-            const rejectBtn = requestElement.querySelector('.reject-btn');
-
-            approveBtn.addEventListener('click', () => handleJoinRequest(userId, 'approve'));
-            rejectBtn.addEventListener('click', () => handleJoinRequest(userId, 'reject'));
-
-            requestsList.appendChild(requestElement);
-        });
-
-        // 插入到消息列表的頂部
-        messageList.insertBefore(requestsContainer, messageList.firstChild);
     }
 
     // 格式化時間戳
@@ -525,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 確保用戶已登入
+    // 初始化應用程序
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             console.log('User is signed in:', user.email);
@@ -543,13 +733,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             userInfo.innerHTML = `
                                 <a href="profile.html" class="profile-link" aria-label="View profile">
                                     <div class="user-avatar">
-                                        ${userData.photoURL ? 
+                                        ${userData?.photoURL ? 
                                             `<img src="${userData.photoURL}" alt="Your avatar">` :
-                                            (userData.username ? userData.username.substring(0, 2).toUpperCase() : 
+                                            (userData?.username ? userData.username.substring(0, 2).toUpperCase() : 
                                              user.email.substring(0, 2).toUpperCase())}
                                     </div>
                                     <span id="user-email" aria-label="Current user email">
-                                        ${userData.username || user.email}
+                                        ${userData?.username || user.email}
                                     </span>
                                 </a>
                             `;
@@ -557,200 +747,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                     .catch(error => {
                         console.error('Error fetching username:', error);
-                        userEmailElement.textContent = user.email;
+                        if (userEmailElement) {
+                            userEmailElement.textContent = user.email;
+                        }
                     });
             }
             
-            checkRoomMembership(user);
+            checkRoomMembership(user)
+                .then(() => {
+                    initializeUI();
+                    listenToJoinRequests(); // 添加監聽加入請求
+                });
         } else {
             console.log('No user is signed in');
             window.location.href = 'index.html';
         }
     });
-
-    // 更新消息發送處理
-    messageForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const messageInput = document.getElementById('message-input');
-        const message = messageInput.value.trim();
-        
-        if (!message) return;
-
-        try {
-            const currentUser = firebase.auth().currentUser;
-            if (!currentUser) {
-                throw new Error('Please sign in to send messages');
-            }
-
-            const db = firebase.database();
-            const messagesRef = db.ref(`chatrooms/${roomId}/messages`);
-
-            // 發送用戶消息
-            await messagesRef.push().set({
-                text: message,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                userId: currentUser.uid,
-                displayName: currentUser.displayName || currentUser.email,
-                type: 'user'
-            });
-
-            messageInput.value = '';
-        } catch (error) {
-            console.error('Error sending message:', error);
-            alert(error.message || 'Failed to send message. Please try again.');
-        }
-    });
-
-    // 登出
-    if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            firebase.auth().signOut()
-                .then(() => {
-                    console.log('User signed out successfully');
-                    window.location.href = 'index.html';
-                })
-                .catch((error) => {
-                    console.error('Error signing out:', error);
-                    alert('Error signing out. Please try again.');
-                });
-        });
-    }
-
-    // Sidebar toggle functionality
-    const toggleMembersButton = document.querySelector('.toggle-members');
-    const sidebarOverlay = document.querySelector('.sidebar-overlay');
-
-    function toggleSidebar() {
-        membersSidebar.classList.toggle('active');
-        sidebarOverlay.classList.toggle('active');
-        
-        // Update ARIA attributes
-        const isExpanded = membersSidebar.classList.contains('active');
-        toggleMembersButton.setAttribute('aria-expanded', isExpanded);
-        
-        // Prevent body scrolling when sidebar is open
-        document.body.style.overflow = isExpanded ? 'hidden' : '';
-    }
-
-    toggleMembersButton.addEventListener('click', toggleSidebar);
-    sidebarOverlay.addEventListener('click', toggleSidebar);
-
-    // Close sidebar on escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && membersSidebar.classList.contains('active')) {
-            toggleSidebar();
-        }
-    });
-
-    // Handle window resize
-    let windowWidth = window.innerWidth;
-    window.addEventListener('resize', () => {
-        const newWidth = window.innerWidth;
-        if (newWidth !== windowWidth) {
-            windowWidth = newWidth;
-            if (newWidth > 768 && membersSidebar.classList.contains('active')) {
-                toggleSidebar();
-            }
-        }
-    });
-
-    // 添加處理加入請求的函數
-    function handleJoinRequests() {
-        const currentUser = firebase.auth().currentUser;
-        if (!currentUser) return;
-        
-        const db = firebase.database();
-        const roomRef = db.ref(`chatrooms/${roomId}`);
-        
-        // 檢查用戶是否是管理員
-        roomRef.child('members').child(currentUser.uid).once('value')
-            .then(snapshot => {
-                const memberData = snapshot.val();
-                if (!memberData || memberData.role !== 'admin') {
-                    return;
-                }
-                
-                // 監聽加入請求
-                roomRef.child('joinRequests').on('child_added', snapshot => {
-                    const request = snapshot.val();
-                    if (request.status === 'pending') {
-                        showJoinRequestNotification(snapshot.key, request);
-                    }
-                });
-            });
-    }
-
-    // 顯示加入請求通知
-    function showJoinRequestNotification(userId, request) {
-        const notification = document.createElement('div');
-        notification.className = 'join-request-notification';
-        notification.innerHTML = `
-            <div class="request-info">
-                <strong>${request.username}</strong> wants to join the chatroom
-            </div>
-            <div class="request-actions">
-                <button onclick="approveJoinRequest('${userId}')">Approve</button>
-                <button onclick="rejectJoinRequest('${userId}')">Reject</button>
-            </div>
-        `;
-        
-        document.querySelector('.chat-container').prepend(notification);
-    }
-
-    // 批准加入請求
-    function approveJoinRequest(userId) {
-        const db = firebase.database();
-        const batch = {};
-        
-        // 更新請求狀態
-        batch[`chatrooms/${roomId}/joinRequests/${userId}/status`] = 'approved';
-        
-        // 添加用戶到成員列表
-        db.ref(`users/${userId}`).once('value')
-            .then(snapshot => {
-                const userData = snapshot.val();
-                batch[`chatrooms/${roomId}/members/${userId}`] = {
-                    email: userData.email,
-                    username: userData.username,
-                    role: 'member',
-                    joinedAt: firebase.database.ServerValue.TIMESTAMP
-                };
-                
-                return db.ref().update(batch);
-            })
-            .then(() => {
-                // 發送系統消息通知
-                sendSystemMessage(`${userData.username} has joined the chatroom`);
-                // 移除通知
-                removeJoinRequestNotification(userId);
-            })
-            .catch(error => {
-                console.error('Error approving join request:', error);
-                alert('Error approving join request. Please try again.');
-            });
-    }
-
-    // 拒絕加入請求
-    function rejectJoinRequest(userId) {
-        const db = firebase.database();
-        db.ref(`chatrooms/${roomId}/joinRequests/${userId}/status`).set('rejected')
-            .then(() => {
-                removeJoinRequestNotification(userId);
-            })
-            .catch(error => {
-                console.error('Error rejecting join request:', error);
-                alert('Error rejecting join request. Please try again.');
-            });
-    }
-
-    // 移除加入請求通知
-    function removeJoinRequestNotification(userId) {
-        const notification = document.querySelector(`.join-request-notification[data-user-id="${userId}"]`);
-        if (notification) {
-            notification.remove();
-        }
-    }
-
-    // 在頁面加載時初始化
-    handleJoinRequests();
-}); 
+});

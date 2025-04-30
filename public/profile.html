@@ -8,233 +8,346 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .profile-container {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 700px;
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .page-container {
+            max-width: 1000px;
             margin: 40px auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .profile-sidebar {
+            background: white;
+            border-radius: 16px;
             padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            height: fit-content;
         }
 
-        .profile-header {
+        .profile-picture-section {
             text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        .back-button {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .back-button:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-primary);
+            margin-bottom: 30px;
         }
 
         .profile-picture-container {
-            position: relative;
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             margin: 0 auto 20px;
-        }
-
-        .profile-picture-container img {
-            width: 100%;
-            height: 100%;
+            position: relative;
             border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .change-picture-btn {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            background: #f0f0f0;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+        }
+
+        .profile-picture {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .default-avatar {
+            font-size: 80px;
+            color: #999;
+        }
+
+        .upload-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .profile-picture-container:hover .upload-overlay {
+            opacity: 1;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .user-name {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0 0 5px;
+            color: var(--text-primary);
+        }
+
+        .user-email {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin: 0;
+        }
+
+        .nav-menu {
+            margin-top: 30px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
             transition: all 0.3s ease;
         }
 
-        .change-picture-btn:hover {
-            background: var(--primary-dark);
-            transform: scale(1.1);
+        .nav-link:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-color);
         }
 
-        .profile-field {
-            margin-bottom: 24px;
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
         }
 
-        .profile-field label {
-            display: block;
+        .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-header {
+            margin-bottom: 40px;
+        }
+
+        .content-title {
+            margin: 0;
+            font-size: 2em;
+            color: var(--text-primary);
+        }
+
+        .content-subtitle {
             color: var(--text-secondary);
+            margin: 5px 0 0;
+        }
+
+        .profile-form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
             margin-bottom: 8px;
+            color: var(--text-primary);
             font-weight: 500;
         }
 
-        .profile-field input,
-        .profile-field textarea {
+        .form-input {
             width: 100%;
-            padding: 12px;
+            padding: 12px 16px;
             border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.3s ease;
+            background: #f8f9fa;
         }
 
-        .profile-field input:focus,
-        .profile-field textarea:focus {
+        .form-input:focus {
             border-color: var(--primary-color);
+            background: white;
             outline: none;
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
 
-        .profile-field textarea {
-            min-height: 100px;
+        textarea.form-input {
+            min-height: 120px;
             resize: vertical;
         }
 
-        .status-info {
-            background: var(--background-light);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 8px;
-        }
-
-        .status-info p {
-            color: var(--text-secondary);
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .update-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s ease;
+        .button-group {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 15px;
             margin-top: 20px;
         }
 
-        .update-btn:hover {
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
         }
 
-        .error-message {
-            color: var(--error-color);
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        .success-message {
-            background: var(--success-color);
+        .btn-danger {
+            background: #dc3545;
             color: white;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            margin-top: 16px;
-            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
         }
 
-        .nav-links {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-        }
+        @media (max-width: 992px) {
+            .page-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
 
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 14px;
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary-color);
-        }
-
-        #signout-btn {
-            background: var(--error-color);
-            margin-bottom: 15px;
-        }
-
-        #signout-btn:hover {
-            background: var(--error-dark);
+            .profile-sidebar {
+                max-width: 400px;
+                margin: 0 auto;
+            }
         }
 
         @media (max-width: 768px) {
-            .profile-container {
-                margin: 20px;
+            body {
+                padding: 10px;
+            }
+
+            .page-container {
+                margin: 20px auto;
+            }
+
+            .main-content {
                 padding: 20px;
             }
 
-            .back-button {
-                position: static;
-                transform: none;
-                margin-bottom: 20px;
+            .profile-form {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <div class="background"></div>
-    
-    <div class="profile-container">
-        <div class="profile-header">
-            <a href="chatrooms.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Back to Chat Rooms
-            </a>
-            <h1>Profile Settings</h1>
-            <p class="subtitle">Manage your account information</p>
-        </div>
+    <div class="page-container">
+        <!-- 左側邊欄 -->
+        <aside class="profile-sidebar">
+            <div class="profile-picture-section">
+                <label for="file-input" class="profile-picture-container">
+                    <img id="profile-picture" class="profile-picture" style="display: none;">
+                    <div class="default-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="upload-overlay">
+                        <i class="fas fa-camera"></i> Change Picture
+                    </div>
+                </label>
+                <input type="file" id="file-input" accept="image/*">
+                <h2 class="user-name" id="display-name">Loading...</h2>
+                <p class="user-email" id="user-email">Loading...</p>
+            </div>
 
-        <div id="profile-info">
-            <!-- Profile form will be inserted here by JavaScript -->
-        </div>
+            <nav class="nav-menu">
+                <a href="chatrooms.html" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    Chat Rooms
+                </a>
+                <a href="profile.html" class="nav-link active">
+                    <i class="fas fa-user"></i>
+                    Profile
+                </a>
+            </nav>
+        </aside>
 
-        <div class="nav-links">
-            <button onclick="signOut()" id="signout-btn" class="update-btn">
-                <i class="fas fa-sign-out-alt"></i> Sign Out
-            </button>
-            <a href="chatrooms.html">Back to Chat Rooms</a>
-        </div>
+        <!-- 主要內容區 -->
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1 class="content-title">Profile Settings</h1>
+                    <p class="content-subtitle">Manage your account information</p>
+                </div>
+            </header>
+
+            <form id="profile-form" class="profile-form" autocomplete="off">
+                <div class="form-group">
+                    <label class="form-label" for="displayName">Display Name</label>
+                    <input type="text" id="displayName" class="form-input" placeholder="Enter your display name" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" class="form-input" readonly autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-input" placeholder="Enter your phone number" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="address">Address</label>
+                    <input type="text" id="address" class="form-input" placeholder="Enter your address" autocomplete="off">
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="form-label" for="bio">Bio</label>
+                    <textarea id="bio" class="form-input" placeholder="Tell us about yourself" autocomplete="off"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="update-btn">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                    <button type="button" class="btn btn-danger" id="signout-btn" onclick="signOut()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sign Out
+                    </button>
+                </div>
+            </form>
+        </main>
     </div>
 
     <!-- Firebase SDK -->
@@ -242,17 +355,158 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
-    <!-- Custom JS -->
-    <script src="js/profile.js"></script>
+    <!-- Initialize Firebase -->
     <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAu9P2YxQN_kCgOpzDhD6Kz4XYoQxXMUyg",
+            authDomain: "chatroom-679cd.firebaseapp.com",
+            databaseURL: "https://chatroom-679cd-default-rtdb.firebaseio.com",
+            projectId: "chatroom-679cd",
+            storageBucket: "chatroom-679cd.appspot.com",
+            messagingSenderId: "106697321863",
+            appId: "1:106697321863:web:58fece4bc10e1cc1507722"
+        };
+
+        // 初始化 Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // 初始化 Firebase 服務
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // 處理頭像上傳
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 檢查文件大小（限制為 1MB）
+            if (file.size > 1024 * 1024) {
+                alert('Image size should be less than 1MB');
+                return;
+            }
+
+            // 檢查文件類型
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                
+                // 顯示圖片
+                const profilePicture = document.getElementById('profile-picture');
+                const defaultAvatar = document.querySelector('.default-avatar');
+                
+                profilePicture.src = base64Image;
+                profilePicture.style.display = 'block';
+                defaultAvatar.style.display = 'none';
+
+                // 將 base64 圖片數據保存到用戶資料中
+                const user = auth.currentUser;
+                if (user) {
+                    database.ref(`users/${user.uid}`).update({
+                        profilePicture: base64Image
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 確保用戶已登入
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // 如果用戶未登入，重定向到登入頁面
+                window.location.href = '/';
+                return;
+            }
+
+            // 更新用戶界面
+            updateUserInterface(user);
+        });
+
+        // 更新用戶界面
+        function updateUserInterface(user) {
+            const displayNameElement = document.getElementById('display-name');
+            const userEmailElement = document.getElementById('user-email');
+            const displayNameInput = document.getElementById('displayName');
+            const emailInput = document.getElementById('email');
+            const bioInput = document.getElementById('bio');
+            const phoneInput = document.getElementById('phone');
+            const addressInput = document.getElementById('address');
+
+            // 更新用戶信息
+            displayNameElement.textContent = user.displayName || 'User';
+            userEmailElement.textContent = user.email;
+            displayNameInput.value = user.displayName || '';
+            emailInput.value = user.email;
+
+            // 從數據庫獲取用戶資料
+            database.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+                const userData = snapshot.val() || {};
+                
+                if (userData.bio) bioInput.value = userData.bio;
+                if (userData.phone) phoneInput.value = userData.phone;
+                if (userData.address) addressInput.value = userData.address;
+                
+                // 顯示頭像
+                if (userData.profilePicture) {
+                    const profilePicture = document.getElementById('profile-picture');
+                    const defaultAvatar = document.querySelector('.default-avatar');
+                    
+                    profilePicture.src = userData.profilePicture;
+                    profilePicture.style.display = 'block';
+                    defaultAvatar.style.display = 'none';
+                }
+            });
+        }
+
+        // 處理表單提交
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newDisplayName = document.getElementById('displayName').value;
+            const bio = document.getElementById('bio').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+
+            // 更新用戶資料
+            user.updateProfile({
+                displayName: newDisplayName
+            }).then(() => {
+                // 更新數據庫中的用戶資料
+                return database.ref(`users/${user.uid}`).update({
+                    displayName: newDisplayName,
+                    bio: bio,
+                    phone: phone,
+                    address: address,
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                });
+            }).then(() => {
+                // 更新界面
+                document.getElementById('display-name').textContent = newDisplayName;
+                alert('Profile updated successfully!');
+            }).catch((error) => {
+                console.error('Error updating profile:', error);
+                alert('Error updating profile. Please try again.');
+            });
+        });
+
+        // 登出功能
         function signOut() {
-            firebase.auth().signOut()
+            auth.signOut()
                 .then(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = '/';
                 })
                 .catch((error) => {
-                    console.error('Sign out error:', error);
-                    alert('Error signing out. Please try again.');
+                    console.error('Error signing out:', error);
                 });
         }
     </script>

@@ -437,6 +437,280 @@
                 transform: translateX(-250px);
             }
         }
+
+        /* 加入請求樣式 */
+        .join-requests {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            margin: 1rem;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .join-requests-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .join-requests-header h3 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .requests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .request-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .request-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .request-username {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .request-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .approve-btn,
+        .reject-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .approve-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .approve-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .reject-btn {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        .reject-btn:hover {
+            background: #ff3333;
+        }
+
+        /* 系統消息和加入請求消息樣式 */
+        .system-message {
+            display: flex;
+            justify-content: center;
+            margin: 0.5rem 0;
+        }
+
+        .system-message .message-content {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 16px;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .join-request-message .message-content {
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-color);
+        }
+
+        /* 通知樣式 */
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .approve-notification {
+            background: var(--primary-color);
+        }
+
+        .reject-notification {
+            background: #ff4d4d;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 成員側邊欄標題樣式 */
+        .members-header-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-primary);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .header-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .requests-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 模態框樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+
+        .requests-list {
+            padding: 1rem;
+        }
+
+        .request-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+
+            .header-buttons {
+                position: fixed;
+                top: 1rem;
+                right: 5rem;
+                z-index: 100;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 20px;
+                padding: 0.25rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+        }
     </style>
     <!-- Firebase App (the core Firebase SDK) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -462,10 +736,10 @@
     </script>
 </head>
 <body>
-    <!-- Overlay for mobile sidebar -->
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
-    
     <div class="chat-container">
+        <!-- Overlay for mobile sidebar -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        
         <!-- 添加動畫元素 -->
         <div class="wave"></div>
         <div class="wave"></div>
@@ -507,10 +781,14 @@
             <!-- 成員列表側邊欄 -->
             <div class="members-sidebar" aria-label="Members sidebar">
                 <div class="members-header">
-                    <h3>Room Members</h3>
-                    <button id="toggle-members" class="toggle-members-btn" aria-label="Toggle members list">
-                        <i class="fas fa-users" aria-hidden="true"></i>
-                    </button>
+                    <div class="members-header-title">
+                        <h3>Room Members</h3>
+                        <div class="header-buttons">
+                            <button id="toggle-members" class="header-btn" aria-label="Toggle members list">
+                                <i class="fas fa-users"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div id="members-list" class="members-list" role="list" aria-label="Room members list">
                     <!-- Members will be listed here -->
@@ -527,21 +805,21 @@
                 <div class="message-input-container">
                     <form id="message-form" class="message-form">
                         <div class="message-input-wrapper">
-                            <input type="text" 
-                                   id="message-input" 
-                                   placeholder="Type your message..." 
-                                   required
-                                   autocomplete="off"
-                                   aria-label="Message input">
-                            <button type="submit" id="send-button" class="send-button" aria-label="Send message">
-                                <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                            <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+                            <button type="button" id="image-upload-btn" class="upload-btn" aria-label="Upload image">
+                                <i class="fas fa-image"></i>
                             </button>
                         </div>
+                        <button type="submit" class="send-btn" aria-label="Send message">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </form>
+                    <input type="file" id="image-input" accept="image/*" style="display: none;">
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Chat Script -->
     <script src="js/chat.js"></script>
 </body>

@@ -1,11 +1,4 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAu9P2YxQN_kCgOpzDhD6Kz4XYoQxXMUyg",
   authDomain: "chatroom-679cd.firebaseapp.com",
@@ -17,10 +10,10 @@ const firebaseConfig = {
   measurementId: "G-NYQHW23511"
 };
 
-// Initialize Firebase - 使用與頁面匹配的 Firebase v8 語法
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// 為 v8 SDK 初始化服務
+// Initialize services
 const auth = firebase.auth();
 const database = firebase.database();
 

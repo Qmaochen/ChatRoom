@@ -85,6 +85,35 @@
         </div>
     </div>
 
+    <div class="join-request-popup-container"></div>
+
+    <template id="join-request-template">
+        <div class="join-request-popup">
+            <div class="join-request-header">
+                <h3>加入請求</h3>
+                <button class="join-request-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="join-request-content">
+                <div class="request-info">
+                    <span class="request-user"></span>
+                    <span class="request-time"></span>
+                </div>
+                <div class="request-actions">
+                    <button class="approve-btn">
+                        <i class="fas fa-check"></i>
+                        同意
+                    </button>
+                    <button class="reject-btn">
+                        <i class="fas fa-times"></i>
+                        拒絕
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Initialize Firebase -->
     <script>
         // Firebase 配置
