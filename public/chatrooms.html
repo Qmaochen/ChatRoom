@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>ChatRoom - Rooms</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modern-theme.css">
+    <link rel="stylesheet" href="css/chatrooms.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Firebase App (the core Firebase SDK) -->
@@ -17,10 +18,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
-    <div class="background"></div>
-    
     <div class="chatrooms-container">
-        <!-- chat header -->
+        <!-- 聊天室列表標題和操作按鈕 -->
         <div class="chatrooms-header">
             <div class="header-left">
                 <h1>Chatrooms</h1>
@@ -37,22 +36,70 @@
                     <i class="fas fa-user"></i>
                     <span id="user-email">Loading...</span>
                 </div>
-                
-                <!-- profile button -->
                 <button id="profile-btn" class="profile-btn" onclick="window.location.href='profile.html'">
                     <i class="fas fa-user"></i>
                 </button>
-                <!-- logout button -->
                 <button id="logout-btn" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
-        </div>
+        </header>
 
-        <!-- chatrooms list -->
+        <!-- 聊天室列表 -->
         <div id="chatrooms-list" class="chatrooms-list">
             <!-- Chatrooms will be listed here -->
-        </div>
+        </main>
+
+        <!-- Empty State -->
+        <template id="no-chatrooms-template">
+            <div class="no-chatrooms">
+                <i class="fas fa-comments"></i>
+                <h3>No Chatrooms Yet</h3>
+                <p>Create a new chatroom to get started!</p>
+            </div>
+        </template>
+
+        <!-- Error State -->
+        <template id="error-message-template">
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Oops!</h3>
+                <p>Something went wrong. Please try again later.</p>
+            </div>
+        </template>
+
+        <!-- Chatroom Card Template -->
+        <template id="chatroom-template">
+            <div class="chatroom-card">
+                <div class="chatroom-content">
+                    <div class="chatroom-header">
+                        <h3 class="chatroom-name"></h3>
+                        <span class="room-type"></span>
+                    </div>
+                    <p class="chatroom-description"></p>
+                    <div class="chatroom-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-users"></i>
+                            <span class="members-count">0 members</span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span class="created-at"></span>
+                        </span>
+                    </div>
+                    <div class="chatroom-actions">
+                        <button class="btn btn-secondary join-request-btn">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Request to Join</span>
+                        </button>
+                        <button class="btn btn-primary join-btn">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Join Chat</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 
     <!-- Create Chatroom Modal -->
@@ -65,16 +112,17 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <!-- create room form -->
             <form id="create-room-form">
                 <div class="form-group">
                     <label for="room-name">Room Name</label>
-                    <input type="text" id="room-name" required minlength="3" maxlength="30"
+                    <input type="text" id="room-name" required
+                           minlength="3" maxlength="30"
                            placeholder="Enter room name (3-30 characters)">
                 </div>
                 <div class="form-group">
                     <label for="room-description">Description</label>
-                    <textarea id="room-description" rows="3" maxlength="200"
+                    <textarea id="room-description" rows="3"
+                              maxlength="200"
                               placeholder="Enter room description (optional)"></textarea>
                 </div>
                 <!-- private room -->
@@ -87,14 +135,13 @@
                 </div>
                 <!-- cancel and create -->
                 <div class="modal-buttons">
-                    <button type="button" class="cancel-btn" id="cancel-create-room">Cancel</button>
-                    <button type="submit" class="create-btn">Create Room</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-create-room">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Room</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- join request popup -->
     <div class="join-request-popup-container"></div>
 
     <template id="join-request-template">
@@ -111,102 +158,20 @@
                     <span class="request-time"></span>
                 </div>
                 <div class="request-actions">
-                    <button class="approve-btn">
+                    <button class="btn btn-primary approve-btn">
                         <i class="fas fa-check"></i>
-                        Approve
+                        同意
                     </button>
-                    <button class="reject-btn">
+                    <button class="btn btn-secondary reject-btn">
                         <i class="fas fa-times"></i>
-                        Reject
+                        拒絕
                     </button>
                 </div>
             </div>
         </div>
     </template>
 
-    <!-- Initialize Firebase -->
-    <script>
-        // Firebase 配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyAu9P2YxQN_kCgOpzDhD6Kz4XYoQxXMUyg",
-            authDomain: "chatroom-679cd.firebaseapp.com",
-            databaseURL: "https://chatroom-679cd-default-rtdb.firebaseio.com",
-            projectId: "chatroom-679cd",
-            storageBucket: "chatroom-679cd.firebasestorage.app",
-            messagingSenderId: "106697321863",
-            appId: "1:106697321863:web:58fece4bc10e1cc1507722"
-        };
-        // 初始化 Firebase
-        firebase.initializeApp(firebaseConfig);
-    </script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/chatrooms.js"></script>
-    <style>
-    .privacy-options {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        margin-top: 8px;
-    }
-
-    .privacy-option {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        padding: 12px;
-        border: 2px solid var(--border-color);
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .privacy-option:hover {
-        border-color: var(--primary-color);
-        background: rgba(67, 97, 238, 0.05);
-    }
-
-    .privacy-option input[type="radio"] {
-        margin-right: 8px;
-    }
-
-    .privacy-description {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-left: 24px;
-    }
-
-    .no-chatrooms,
-    .error-message {
-        text-align: center;
-        padding: 40px 20px;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 12px;
-        margin: 20px;
-    }
-
-    .no-chatrooms i,
-    .error-message i {
-        font-size: 48px;
-        margin-bottom: 16px;
-        display: block;
-    }
-
-    .no-chatrooms i {
-        color: var(--primary-color);
-    }
-
-    .error-message i {
-        color: var(--error-color);
-    }
-
-    .no-chatrooms p,
-    .error-message p {
-        color: var(--text-secondary);
-        font-size: 16px;
-    }
-
-    .error-message p {
-        color: var(--error-color);
-    }
-    </style>
 </body>
 </html> 

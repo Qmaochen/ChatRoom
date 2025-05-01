@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>ChatRoom - Chat</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modern-theme.css">
+    <link rel="stylesheet" href="css/chat.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -752,52 +753,36 @@
             <div class="particle"></div>
         </div>
         <!-- 聊天室標題和用戶資訊 -->
-        <div class="chat-header">
+        <header class="chat-header">
             <div class="header-left">
-                <a href="chatrooms.html" class="back-button" aria-label="Back to chatrooms">
+                <a href="chatrooms.html" class="back-button">
                     <i class="fas fa-arrow-left"></i>
                 </a>
                 <div class="room-info">
                     <h2 id="room-name">Loading...</h2>
-                    <span id="room-members-count" aria-live="polite">0 members</span>
+                    <span id="room-members-count" class="room-members-count">
+                        <i class="fas fa-users"></i>
+                        <span>0 members</span>
+                    </span>
                 </div>
             </div>
             <div class="header-right">
                 <div class="user-info">
-                    <a href="profile.html" class="profile-link" aria-label="View profile">
-                        <i class="fas fa-user" aria-hidden="true"></i>
-                        <span id="user-email" aria-label="Current user email">Loading...</span>
-                    </a>
+                    <i class="fas fa-user"></i>
+                    <span id="user-email">Loading...</span>
                 </div>
-                <button id="logout-btn" class="logout-btn" aria-label="Logout">
-                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-                    <span class="button-text">Logout</span>
+                <button id="logout-btn" class="btn btn-secondary">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </button>
             </div>
-        </div>
+        </header>
 
         <!-- 聊天內容區域 -->
         <div class="chat-content">
-            <!-- 成員列表側邊欄 -->
-            <div class="members-sidebar" aria-label="Members sidebar">
-                <div class="members-header">
-                    <div class="members-header-title">
-                        <h3>Room Members</h3>
-                        <div class="header-buttons">
-                            <button id="toggle-members" class="header-btn" aria-label="Toggle members list">
-                                <i class="fas fa-users"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div id="members-list" class="members-list" role="list" aria-label="Room members list">
-                    <!-- Members will be listed here -->
-                </div>
-            </div>
-
             <!-- 訊息區域 -->
             <div class="messages-container">
-                <div id="message-list" class="chat-messages" role="log" aria-label="Chat messages">
+                <div id="message-list" class="chat-messages" role="log">
                     <!-- Messages will appear here -->
                 </div>
                 
@@ -806,15 +791,21 @@
                     <form id="message-form" class="message-form">
                         <div class="message-input-wrapper">
                             <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
-                            <button type="button" id="image-upload-btn" class="upload-btn" aria-label="Upload image">
-                                <i class="fas fa-image"></i>
-                            </button>
                         </div>
                         <button type="submit" class="send-btn" aria-label="Send message">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </form>
-                    <input type="file" id="image-input" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <!-- 成員列表側邊欄 -->
+            <div class="members-sidebar">
+                <div class="members-header">
+                    <h3>Room Members</h3>
+                </div>
+                <div id="members-list" class="members-list">
+                    <!-- Members will be listed here -->
                 </div>
             </div>
         </div>
