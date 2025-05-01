@@ -32,15 +32,17 @@
         console.log("Firebase initialized in index.html");
     </script>
   </head>
+  <!-- Body -->
   <body>
     <div class="background"></div>
     
     <div class="card-container">
+      <!-- Logo -->
       <div class="logo">
         <i class="fas fa-comments"></i>
         <h1>ChatRoom</h1>
       </div>
-      
+      <!-- Header -->
       <div class="header-content">
         <h2 class="card-title">Welcome back</h2>
         <p class="card-subtitle">Sign in to continue</p>
@@ -49,29 +51,32 @@
       <!-- Login Form -->
       <form id="login-form" class="form">
         <div class="input-field">
+          <!-- Email -->
           <label for="login-email" class="input-label">Email address</label>
           <div class="input-wrapper">
             <i class="fas fa-envelope input-icon"></i>
             <input type="email" id="login-email" placeholder="Enter your email" required>
           </div>
         </div>
-        
+        <!-- Password -->
         <div class="input-field">
           <label for="login-password" class="input-label">Password</label>
           <div class="input-wrapper">
             <i class="fas fa-lock input-icon"></i>
             <input type="password" id="login-password" placeholder="Enter your password" required>
           </div>
-          <a href="#" class="forgot-password">Forgot password?</a>
         </div>
-        
+
+        <!-- Submit Button -->
         <button type="submit" class="submit-btn">Sign in</button>
       </form>
       
+      <!-- Create an account -->
       <div class="redirect-link">
         <p>Don't have an account? <a href="/register">Create an account</a></p>
       </div>
       
+      <!-- footer -->
       <div class="footer">
         <p>Secure messaging for teams and friends</p>
       </div>

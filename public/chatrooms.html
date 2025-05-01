@@ -20,31 +20,36 @@
     <div class="background"></div>
     
     <div class="chatrooms-container">
-        <!-- 聊天室列表標題和操作按鈕 -->
+        <!-- chat header -->
         <div class="chatrooms-header">
             <div class="header-left">
                 <h1>Chatrooms</h1>
                 <span id="rooms-count">Loading...</span>
             </div>
             <div class="header-right">
+                
+                <!-- New chatroom -->
                 <button id="create-room-btn" class="create-room-btn">
                     <i class="fas fa-plus"></i>
-                    <span>New Chatroom</span>
+                    <span>New Room</span>
                 </button>
                 <div class="user-info">
                     <i class="fas fa-user"></i>
                     <span id="user-email">Loading...</span>
                 </div>
+                
+                <!-- profile button -->
                 <button id="profile-btn" class="profile-btn" onclick="window.location.href='profile.html'">
                     <i class="fas fa-user"></i>
                 </button>
+                <!-- logout button -->
                 <button id="logout-btn" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
         </div>
 
-        <!-- 聊天室列表 -->
+        <!-- chatrooms list -->
         <div id="chatrooms-list" class="chatrooms-list">
             <!-- Chatrooms will be listed here -->
         </div>
@@ -55,10 +60,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Create New Chatroom</h2>
+                <!-- close -->
                 <button class="close-modal-btn">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+            <!-- create room form -->
             <form id="create-room-form">
                 <div class="form-group">
                     <label for="room-name">Room Name</label>
@@ -70,6 +77,7 @@
                     <textarea id="room-description" rows="3" maxlength="200"
                               placeholder="Enter room description (optional)"></textarea>
                 </div>
+                <!-- private room -->
                 <div class="form-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="room-private">
@@ -77,6 +85,7 @@
                     </label>
                     <p class="help-text">Private rooms require admin approval to join</p>
                 </div>
+                <!-- cancel and create -->
                 <div class="modal-buttons">
                     <button type="button" class="cancel-btn" id="cancel-create-room">Cancel</button>
                     <button type="submit" class="create-btn">Create Room</button>
@@ -85,12 +94,13 @@
         </div>
     </div>
 
+    <!-- join request popup -->
     <div class="join-request-popup-container"></div>
 
     <template id="join-request-template">
         <div class="join-request-popup">
             <div class="join-request-header">
-                <h3>加入請求</h3>
+                <h3>Join Request</h3>
                 <button class="join-request-close">
                     <i class="fas fa-times"></i>
                 </button>
@@ -103,11 +113,11 @@
                 <div class="request-actions">
                     <button class="approve-btn">
                         <i class="fas fa-check"></i>
-                        同意
+                        Approve
                     </button>
                     <button class="reject-btn">
                         <i class="fas fa-times"></i>
-                        拒絕
+                        Reject
                     </button>
                 </div>
             </div>

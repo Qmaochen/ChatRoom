@@ -49,7 +49,7 @@ body {
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
     opacity: 0.8;
-}
+} 
 
 .background::before {
     content: '';
@@ -122,13 +122,10 @@ body {
     font-size: 48px;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 16px;
-    animation: neonPulse 2s infinite;
-    transform-style: preserve-3d;
+    margin-bottom: 32px;
     transition: all 0.5s ease;
-    filter: drop-shadow(0 2px 4px rgba(74, 108, 247, 0.2));
     position: relative;
+    background: radial-gradient(circle, rgba(67, 97, 238, 0.2), transparent);
 }
 
 .logo i::after {
@@ -138,19 +135,9 @@ body {
     left: 50%;
     width: 0;
     height: 0;
-    background: radial-gradient(circle, rgba(67, 97, 238, 0.2), transparent);
+    /* background: radial-gradient(circle, rgba(67, 97, 238, 0.2), transparent); */
     transform: translate(-50%, -50%);
     transition: all 0.5s ease;
-}
-
-.logo i:hover::after {
-    width: 150%;
-    height: 150%;
-}
-
-.logo i:hover {
-    animation: flip3D 1.5s ease-in-out;
-    transform-style: preserve-3d;
 }
 
 .logo h1 {
@@ -265,16 +252,16 @@ body {
 .submit-btn {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(45deg, #4361ee, #818cf8, #60a5fa, #4361ee);
+    /* background: linear-gradient(45deg, #4361ee, #818cf8, #60a5fa, #4361ee); */
     background-size: 300% 300%;
-    animation: liquidBg 5s ease infinite;
+    /* animation: liquidBg 5s ease infinite; */
     color: white;
     border: none;
-    border-radius: 60% 40% 30% 70%/60% 30% 70% 40%;
+    /* border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; */
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.8s ease;
+    transition: all 0.5s ease;
     position: relative;
     overflow: hidden;
     margin-top: 8px;
@@ -287,27 +274,11 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-    );
-    transition: 0.8s;
+    transition: 0.5s;
 }
 
 .submit-btn:hover::before {
     left: 100%;
-}
-
-.submit-btn:hover {
-    transform: perspective(1000px) rotateX(10deg) rotateY(-10deg) rotateZ(2deg);
-    animation: liquidBg 2s ease infinite;
-}
-
-.submit-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 8px rgba(74, 108, 247, 0.2);
 }
 
 /* Redirect Link */
@@ -368,24 +339,6 @@ body {
     }
 }
 
-/* Forgot Password Link */
-.forgot-password {
-    display: block;
-    text-align: right;
-    color: var(--primary-color);
-    font-size: 13px;
-    text-decoration: none;
-    margin-top: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.forgot-password:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-}
-
-/* Enhanced Responsive Design */
 
 /* Extra Small Devices (Phones < 576px) */
 @media screen and (max-width: 575px) {

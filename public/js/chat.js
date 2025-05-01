@@ -250,10 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="message-text">${escapeHtml(notification.username)} 請求加入聊天室</div>
                     <div class="request-actions">
                         <button onclick="handleJoinRequest('${notification.requestId}', 'approve')" class="approve-btn">
-                            <i class="fas fa-check"></i> 同意
+                            <i class="fas fa-check"></i> Approve
                         </button>
                         <button onclick="handleJoinRequest('${notification.requestId}', 'reject')" class="reject-btn">
-                            <i class="fas fa-times"></i> 拒絕
+                            <i class="fas fa-times"></i> Reject
                         </button>
                     </div>
                     <div class="message-time">${formatTimestamp(notification.timestamp)}</div>
@@ -548,10 +548,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="message-text">${escapeHtml(message.text)}</div>
                         <div class="request-actions">
                             <button onclick="handleJoinRequest('${message.requestId}', 'approve')" class="approve-btn">
-                                <i class="fas fa-check"></i> 同意
+                                <i class="fas fa-check"></i> Approve
                             </button>
                             <button onclick="handleJoinRequest('${message.requestId}', 'reject')" class="reject-btn">
-                                <i class="fas fa-times"></i> 拒絕
+                                <i class="fas fa-times"></i> Reject
                             </button>
                         </div>
                         <div class="message-time">${formatTimestamp(message.timestamp)}</div>

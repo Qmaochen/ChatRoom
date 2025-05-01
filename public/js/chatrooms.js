@@ -526,17 +526,17 @@ function showJoinRequest(requestData) {
     
     requestItem.innerHTML = `
         <div class="request-info">
-            <span class="request-user">${requestData.userEmail} 想要加入聊天室</span>
-            <span class="request-time">${new Date(requestData.timestamp).toLocaleString()}</span>
+            <span class="request-user"></span>
+            <span class="request-time"></span>
         </div>
         <div class="request-actions">
             <button class="approve-btn">
                 <i class="fas fa-check"></i>
-                同意
+                Approve
             </button>
             <button class="reject-btn">
                 <i class="fas fa-times"></i>
-                拒絕
+                Reject
             </button>
         </div>
     `;
@@ -695,7 +695,7 @@ async function displayPendingRequests() {
                 const roomRequests = document.createElement('div');
                 roomRequests.className = 'room-requests';
                 roomRequests.innerHTML = `
-                    <h3>${escapeHtml(room.name)} - 待處理請求</h3>
+                    <h3>${escapeHtml(room.name)} - Join Request</h3>
                     <div class="requests-list"></div>
                 `;
 
@@ -711,10 +711,10 @@ async function displayPendingRequests() {
                         </div>
                         <div class="request-actions">
                             <button class="approve-btn" onclick="handleRequest('${roomId}', '${userId}', 'approve')">
-                                <i class="fas fa-check"></i> 同意
+                                <i class="fas fa-check"></i> Approve
                             </button>
                             <button class="reject-btn" onclick="handleRequest('${roomId}', '${userId}', 'reject')">
-                                <i class="fas fa-times"></i> 拒絕
+                                <i class="fas fa-times"></i> Reject
                             </button>
                         </div>
                     `;
