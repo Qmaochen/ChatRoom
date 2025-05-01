@@ -302,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         membersList.innerHTML = `
             <div class="members-header">
-                <h3>Room Members</h3>
                 <span class="members-count">${Object.keys(members).length}</span>
             </div>
             <div class="members-list-content"></div>
@@ -498,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const count = requestsList.children.length;
             requestsCount.textContent = count;
 
-            // 如果沒有請求了，隱藏整個請求區域
+            // 如果沒有請求，隱藏整個請求區域
             const requestsSection = document.getElementById('join-requests-section');
             if (requestsSection && count === 0) {
                 requestsSection.innerHTML = '';

@@ -1,3 +1,4 @@
+// ChatRoomsList
 // DOM Elements
 const userEmailElement = document.getElementById('user-email');
 const chatroomsList = document.getElementById('chatrooms-list');

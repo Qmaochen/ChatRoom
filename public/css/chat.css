@@ -302,13 +302,14 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: var(--primary-color);
-    color: white;
+    background-color: #2d3748;
+    color: #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 1rem;
+    border: 2px solid #4a5568;
 }
 
 .member-avatar img {
@@ -325,7 +326,7 @@
 
 .member-name {
     font-weight: 500;
-    color: var(--text-primary);
+    color: #2d3748;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -334,12 +335,12 @@
 
 .member-role {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: #4a5568;
     text-transform: capitalize;
 }
 
 .member-role.admin-role {
-    color: var(--primary-color);
+    color: #2b6cb0;
     font-weight: 500;
 }
 
@@ -391,13 +392,15 @@
     display: flex;
     flex-direction: column;
     background-color: #f5f7fa;
+    border: 1px solid #2d3748;
 }
 
 /* 聊天室標題 */
 .chat-header {
-    background: #ffffff;
+    background-color: #2d3748;
+    color: #e2e8f0;
     padding: 1rem;
-    border-bottom: 1px solid #e1e4e8;
+    border-bottom: 1px solid #4a5568;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -415,12 +418,12 @@
 .room-info h2 {
     margin: 0;
     font-size: 1.2rem;
-    color: #333;
+    color: #e2e8f0;
 }
 
 #room-members-count {
     font-size: 0.9rem;
-    color: #666;
+    color: #a0aec0;
 }
 
 /* 主要聊天區域 */
@@ -455,51 +458,124 @@
 
 /* 簡化的消息樣式 */
 .message {
-    display: flex;
-    gap: 0.5rem;
-    max-width: 85%;
-    align-self: flex-start;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+    background-color: transparent;
 }
 
+.message .message-content {
+    background-color: #4a5568;
+    color: #e2e8f0;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #718096;
+}
+
+.message .message-text {
+    color: #1a202c;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 5px 0;
+    font-weight: 500;
+}
+
+.message .message-sender {
+    font-weight: bold;
+    color: #a0aec0;
+    margin-bottom: 5px;
+}
+
+.message .message-time {
+    font-size: 12px;
+    color: #4a5568;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+/* 發送的消息 */
 .message.sent {
-    align-self: flex-end;
-}
-
-.message-content {
-    background: #f1f3f5;
-    padding: 0.75rem 1rem;
-    border-radius: 1rem;
-    position: relative;
+    margin-left: auto;
 }
 
 .message.sent .message-content {
-    background: #007bff;
-    color: white;
+    background-color: #2b6cb0;
+    border: 1px solid #3182ce;
 }
 
-.message-sender {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 0.25rem;
+.message.sent .message-text {
+    color: #1a202c;
 }
 
-.message-text {
-    font-size: 0.95rem;
-    line-height: 1.4;
-    word-wrap: break-word;
+.message.sent .message-time {
+    color: #4a5568;
 }
 
-.message-time {
-    font-size: 0.75rem;
-    color: #999;
-    margin-top: 0.25rem;
+/* 接收的消息 */
+.message.received {
+    margin-right: auto;
+}
+
+/* 系統消息 */
+.message.system-message {
+    margin: 10px auto;
+    max-width: 90%;
+    text-align: center;
+}
+
+.message.system-message .message-content {
+    background-color: #2d3748;
+    color: #a0aec0;
+    padding: 10px 20px;
+    border: 1px solid #4a5568;
+}
+
+/* 加入請求消息 */
+.message.join-request .message-content {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+.message.join-request .request-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.message.join-request button {
+    padding: 5px 15px;
+    border: 1px solid #718096;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.message.join-request .approve-btn {
+    background-color: #2f855a;
+    color: #e2e8f0;
+}
+
+.message.join-request .reject-btn {
+    background-color: #c53030;
+    color: #e2e8f0;
+}
+
+/* 消息列表容器 */
+#message-list {
+    padding: 20px;
+    overflow-y: auto;
+    height: calc(100vh - 200px);  /* 調整高度以適應頁面 */
 }
 
 /* 輸入區域 */
 .message-input-container {
     padding: 1rem;
-    background: #ffffff;
-    border-top: 1px solid #e1e4e8;
+    background-color: #2d3748;
+    border-top: 1px solid #4a5568;
 }
 
 .message-form {
@@ -509,9 +585,10 @@
 
 .message-input-wrapper {
     flex: 1;
-    background: #f1f3f5;
+    background-color: #4a5568;
     border-radius: 24px;
     padding: 0.5rem 1rem;
+    border: 1px solid #718096;
 }
 
 .message-input-wrapper input {
@@ -520,16 +597,22 @@
     background: none;
     padding: 0.5rem 0;
     font-size: 0.95rem;
-    color: #333;
+    color: #e2e8f0;
 }
 
 .message-input-wrapper input:focus {
     outline: none;
+    border-color: #3182ce;
+}
+
+.message-input-wrapper input::placeholder {
+    color: #a0aec0;
 }
 
 .send-btn {
-    background: #007bff;
-    color: white;
+    background-color: #3182ce;
+    color: #e2e8f0;
+    border: 1px solid #4299e1;
     border: none;
     width: 40px;
     height: 40px;
@@ -538,26 +621,33 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
 }
 
 .send-btn:hover {
-    background: #0056b3;
+    background-color: #2b6cb0;
 }
 
 /* 成員側邊欄 */
 .members-sidebar {
     width: 240px;
-    background: #ffffff;
+    background-color: #2d3748;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    border-left: 1px solid #4a5568;
 }
 
 .members-header {
     padding: 1rem;
-    border-bottom: 1px solid #e1e4e8;
+    border-bottom: 1px solid #4a5568;
+}
+
+.members-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #e2e8f0;
 }
 
 .members-list {
@@ -573,10 +663,12 @@
     padding: 0.5rem;
     border-radius: 6px;
     transition: background 0.2s;
+    border: 1px solid #4a5568;
+    background-color: #2d3748;
 }
 
 .member-item:hover {
-    background: #f8f9fa;
+    background-color: #4a5568;
 }
 
 /* RWD 設計 */
@@ -997,4 +1089,22 @@
     .back-button:hover {
         background-color: var(--neutral-600);
     }
+}
+
+/* 滾動條樣式 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #718096;
 } 

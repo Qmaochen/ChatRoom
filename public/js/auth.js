@@ -1,3 +1,5 @@
+// Register and Login
+
 console.log("auth.js loaded at: " + new Date().toISOString());
 
 // 檢查 Firebase 是否可用

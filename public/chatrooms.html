@@ -20,13 +20,12 @@
 <body>
     <div class="chatrooms-container">
         <!-- 聊天室列表標題和操作按鈕 -->
-        <div class="chatrooms-header">
+        <header class="chatrooms-header">
             <div class="header-left">
                 <h1>Chatrooms</h1>
                 <span id="rooms-count">Loading...</span>
             </div>
             <div class="header-right">
-                
                 <!-- New chatroom -->
                 <button id="create-room-btn" class="create-room-btn">
                     <i class="fas fa-plus"></i>
@@ -46,7 +45,7 @@
         </header>
 
         <!-- 聊天室列表 -->
-        <div id="chatrooms-list" class="chatrooms-list">
+        <main id="chatrooms-list" class="chatrooms-list">
             <!-- Chatrooms will be listed here -->
         </main>
 
@@ -107,7 +106,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Create New Chatroom</h2>
-                <!-- close -->
                 <button class="close-modal-btn">
                     <i class="fas fa-times"></i>
                 </button>
@@ -125,7 +123,6 @@
                               maxlength="200"
                               placeholder="Enter room description (optional)"></textarea>
                 </div>
-                <!-- private room -->
                 <div class="form-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="room-private">
@@ -133,7 +130,6 @@
                     </label>
                     <p class="help-text">Private rooms require admin approval to join</p>
                 </div>
-                <!-- cancel and create -->
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-secondary" id="cancel-create-room">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Room</button>
